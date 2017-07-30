@@ -10,7 +10,7 @@
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
-        <testsuite name="caseyamcl Test Suite">
+        <testsuite name="GuzzleRetryMiddleware Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

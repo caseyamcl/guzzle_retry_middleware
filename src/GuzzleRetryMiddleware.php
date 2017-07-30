@@ -1,4 +1,18 @@
 <?php
+/**
+ * Guzzle Retry Middleware Library
+ *
+ * @license http://opensource.org/licenses/MIT
+ * @link https://github.com/caseyamcl/guzzle_retry_middleware
+ * @version 2.0
+ * @package caseyamcl/guzzle_retry_middleware
+ * @author Casey McLaughlin <caseyamcl@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * ------------------------------------------------------------------
+ */
 
 namespace GuzzleRetry;
 
@@ -10,11 +24,13 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Retry After Middleware
  *
- * Guzzle 6 middleware that provides some decent behavior for retrying requests
+ * Guzzle 6 middleware that retries requests when encountering responses
+ * with certain conditions (429 or 503).  This middleware also respects
+ * the `RetryAfter` header
  *
- * @package GuzzleRetry
+ * @author Casey McLaughlin <caseyamcl@gmail.com>
  */
-class GuzzleRetryAfterMiddleware
+class GuzzleRetryMiddleware
 {
     // HTTP date format
     const DATE_FORMAT = 'D, d M Y H:i:s T';
@@ -49,20 +65,20 @@ class GuzzleRetryAfterMiddleware
      * Provides a closure that can be pushed onto the handler stack
      *
      * Example:
-     *  $handlerStack->push(GuzzleRetryAfterMiddleware::factory());
+     * <code>$handlerStack->push(GuzzleRetryMiddleware::factory());</code>
      *
      * @param array $defaultOptions
      * @return \Closure
      */
     public static function factory(array $defaultOptions = [])
     {
-        return function(callable $handler) use ($defaultOptions) {
+        return function (callable $handler) use ($defaultOptions) {
             return new static($handler, $defaultOptions);
         };
     }
 
     /**
-     * GuzzleRetryAfterMiddleware constructor.
+     * GuzzleRetryMiddleware constructor.
      *
      * @param callable $nextHandler
      * @param array $defaultOptions
@@ -96,6 +112,11 @@ class GuzzleRetryAfterMiddleware
     }
 
     /**
+     * No exceptions were thrown during processing
+     *
+     * Depending on where this middleware is in the stack, the response could still
+     * be unsuccessful (e.g. 429 or 503), so check to see if it should be retried
+     *
      * @param RequestInterface $request
      * @param array $options
      * @return callable
@@ -110,6 +131,11 @@ class GuzzleRetryAfterMiddleware
     }
 
     /**
+     * An exception or error was thrown during processing
+     *
+     * If the reason is a BadResponseException exception, check to see if
+     * the request can be retried.  Otherwise, pass it on.
+     *
      * @param RequestInterface $request
      * @param array $options
      * @return callable
@@ -129,9 +155,16 @@ class GuzzleRetryAfterMiddleware
     }
 
     /**
+     * Check to see if a request can be retried
+     *
+     * This checks two things:
+     *
+     * 1. The response status code against the status codes that should be retried
+     * 2. The number of attempts made thus far for this request
+     *
      * @param array $options
      * @param ResponseInterface $response
-     * @return bool
+     * @return bool  TRUE if the response should be retried, FALSE if not
      */
     private function shouldRetry(array $options, ResponseInterface $response)
     {
@@ -148,6 +181,10 @@ class GuzzleRetryAfterMiddleware
     }
 
     /**
+     * Retry the request
+     *
+     * Increments the retry count, determines the delay (timeout), executes callbacks, sleeps, and re-send the request
+     *
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param array $options
@@ -181,6 +218,11 @@ class GuzzleRetryAfterMiddleware
     }
 
     /**
+     * Determine the delay timeout
+     *
+     * Attempts to read and interpret the HTTP `Retry-After` header, or defaults
+     * to a built-in incremental back-off algorithm.
+     *
      * @param ResponseInterface $response
      * @param array $options
      * @return float  Delay timeout, in seconds
@@ -201,10 +243,12 @@ class GuzzleRetryAfterMiddleware
     }
 
     /**
-     * Attempt to derive the timeout from the HTTP Retry-After header
+     * Attempt to derive the timeout from the HTTP `Retry-After` header
+     *
+     * The spec allows the header value to either be a number of seconds or a datetime.
      *
      * @param string $headerValue
-     * @return float|null
+     * @return float|null  The number of seconds to wait, or NULL if unsuccessful (invalid header)
      */
     private function deriveTimeoutFromHeader($headerValue)
     {
