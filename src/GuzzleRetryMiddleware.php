@@ -17,7 +17,6 @@
 namespace GuzzleRetry;
 
 use GuzzleHttp\Exception\BadResponseException;
-use function GuzzleHttp\Promise\rejection_for;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -149,7 +148,7 @@ class GuzzleRetryMiddleware
                 && $this->shouldRetry($options, $reason->getResponse())) {
                 return $this->doRetry($request, $reason->getResponse(), $options);
             } else {
-                return rejection_for($reason);
+                return \GuzzleHttp\Promise\rejection_for($reason);
             }
         };
     }
