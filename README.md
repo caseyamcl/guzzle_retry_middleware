@@ -14,8 +14,7 @@ If a server supplies a [Retry-After header](https://developer.mozilla.org/en-US/
 this middleware will delay subsequent requests per the server's instructed wait period.
 
 Unlike the built-in `RetryAfter` middleware, this middleware provides some default behavior for negotiating retries
-based on rules in the HTTP Spec.  You can drop it right into your request stack without any configuration.  It is,
-however, somewhat configurable.
+based on rules in the HTTP Spec.  You can drop it right into your request stack without any additional configuration.
 
 Features, at-a-glance:
 
