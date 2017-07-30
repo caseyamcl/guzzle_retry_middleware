@@ -33,6 +33,9 @@ use GuzzleHttp\Psr7\Response;
  */
 class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * Simple instantiation test provides immediate feedback on syntax errors
+     */
     public function testInstantiation()
     {
         $handler = new MockHandler();
@@ -41,6 +44,8 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test retry occurs when status codes match or do not match
+     *
      * @dataProvider testRetryOccursWhenStatusCodeMatchesProvider
      * @param Response $response
      * @param bool $retryShouldOccur
@@ -68,6 +73,11 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('All Good', (string) $response->getBody());
     }
 
+    /**
+     * Provides data for test above
+     *
+     * @return array
+     */
     public function testRetryOccursWhenStatusCodeMatchesProvider()
     {
         return [
@@ -77,6 +87,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
+    /**
+     * Test that the max_retry_attempts parameter is respected
+     */
     public function testRetriesFailAfterSpecifiedLimit()
     {
         $retryCount = 0;
@@ -102,6 +115,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * Test that setting options in the Guzzle client constructor works
+     */
     public function testDefaultOptionsCanBeSetInGuzzleClientConstructor()
     {
         $numRetries = 0;
@@ -132,6 +148,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Good', (string) $response->getBody());
     }
 
+    /**
+     * Test that setting options per request overrides other options correctly
+     */
     public function testOptionsCanBeSetInRequest()
     {
         $numRetries = 0;
@@ -163,6 +182,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Good', (string) $response->getBody());
     }
 
+    /**
+     * Test delay is set correctly when server provides `Retry-After` header in date form
+     */
     public function testDelayDerivedFromDateIfServerProvidesValidRetryAfterDateHeader()
     {
         $calculatedDelay = null;
@@ -189,6 +211,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($calculatedDelay > 1 && $calculatedDelay < 3);
     }
 
+    /**
+     * Test delay is set correctly when server provides `Retry-After` header in integer form
+     */
     public function testDelayDerivedFromSecondsIfServerProvidesValidRetryAfterSecsHeader()
     {
         $calculatedDelay = null;
@@ -211,6 +236,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(3, $calculatedDelay);
     }
 
+    /**
+     * Test default delay is used if server provides a malformed `Retry-After` header
+     */
     public function testDefaultDelayOccursIfServerProvidesInvalidRetryAfterHeader()
     {
         $calculatedDelay = null;
@@ -234,6 +262,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1.5, $calculatedDelay);
     }
 
+    /**
+     * Test that retry does not occur if no `Retry-After` header and option is set
+     */
     public function testDelayDoesNotOccurIfNoRetryAfterHeaderAndOptionSetToIgnore()
     {
         $retryOccurred = false;
@@ -262,6 +293,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($retryOccurred);
     }
 
+    /**
+     * Test that the retry multiplier works as predicted
+     */
     public function testRetryMultiplierWorksAsExpected()
     {
         $delayTimes = [];
@@ -287,6 +321,9 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
+    /**
+     * Test that BadResponseException and child classes are caught and handled
+     */
     public function testBadResponseExceptionIsHandled()
     {
         $numberOfRetries = 0;
@@ -312,6 +349,8 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test that other exceptions (non-BadResponseException) are not caught or handled
+     *
      * @expectedException \GuzzleHttp\Exception\TransferException
      */
     public function testNonBadResponseExceptionIsNotHandled()
