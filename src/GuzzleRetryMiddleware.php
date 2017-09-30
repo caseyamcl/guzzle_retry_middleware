@@ -17,6 +17,9 @@
 namespace GuzzleRetry;
 
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -52,7 +55,10 @@ class GuzzleRetryMiddleware
         'retry_on_status'                  => ['429', '503'],
 
         // Callback to trigger when delay occurs (accepts count, delay, request, response, options)
-        'on_retry_callback'                => null
+        'on_retry_callback'                => null,
+
+        // Retry on connect timeout?
+        'retry_on_connect_timeout'         => false
     ];
 
     /**
@@ -102,6 +108,7 @@ class GuzzleRetryMiddleware
             $options['retry_count'] = 0;
         }
 
+        /** @var Promise $next */
         $next = $this->nextHandler;
         return $next($request, $options)
             ->then(
@@ -123,8 +130,8 @@ class GuzzleRetryMiddleware
     private function onFulfilled(RequestInterface $request, array $options)
     {
         return function (ResponseInterface $response) use ($request, $options) {
-            return ($this->shouldRetry($options, $response))
-                ? $this->doRetry($request, $response, $options)
+            return ($this->shouldRetryHttpResponse($options, $response))
+                ? $this->doRetry($request, $options, $response)
                 : $response;
         };
     }
@@ -143,14 +150,46 @@ class GuzzleRetryMiddleware
     {
         return function ($reason) use ($request, $options) {
 
-            if ($reason instanceof BadResponseException
-                && $reason->getResponse()
-                && $this->shouldRetry($options, $reason->getResponse())) {
-                return $this->doRetry($request, $reason->getResponse(), $options);
-            } else {
-                return \GuzzleHttp\Promise\rejection_for($reason);
+            // If was bad response exception, test if we retry based on the response headers
+            if ($reason instanceof BadResponseException) {
+
+
+                if ($this->shouldRetryHttpResponse($options, $reason->getResponse())) {
+                    return $this->doRetry($request, $options, $reason->getResponse());
+                }
+
+            // If this was a connection exception, test to see if we should retry based on connect timeout rules
+            } elseif ($reason instanceof ConnectException) {
+
+                // If was another type of exception, test if we should retry based on timeout rules
+                if ($this->shouldRetryTransferException($reason, $options)) {
+                    return $this->doRetry($request, $options);
+                }
             }
+
+            // If made it here, then we have decided not to retry the request
+            return \GuzzleHttp\Promise\rejection_for($reason);
         };
+    }
+
+    private function shouldRetryTransferException(TransferException $e, array $options)
+    {
+
+        switch (true) {
+            case $this->countRemainingRetries($options) == 0:
+                return false;
+
+            // Test if this was a connection timeout exception
+            case ($e instanceOf ConnectException)
+                && isset($e->getHandlerContext()['errno'])
+                && $e->getHandlerContext()['errno'] == 28:
+                return isset($options['retry_on_connect_timeout']) && $options['retry_on_connect_timeout'] == true;
+
+            // No conditions met, so return false
+            default:
+                return false;
+        }
+
     }
 
     /**
@@ -162,21 +201,46 @@ class GuzzleRetryMiddleware
      * 2. The number of attempts made thus far for this request
      *
      * @param array $options
-     * @param ResponseInterface $response
+     * @param ResponseInterface|null $response
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
-    private function shouldRetry(array $options, ResponseInterface $response)
+    private function shouldRetryHttpResponse(array $options, ResponseInterface $response = null)
     {
-        $retryCount = isset($options['retry_count']) ? $options['retry_count'] : 0;
-        $statuses   = array_map('intval', (array) $options['retry_on_status']);
+        $statuses = array_map('intval', (array) $options['retry_on_status']);
 
-        if ($retryCount >= (int) $options['max_retry_attempts']) {
-            return false;
-        } elseif (! $response->hasHeader('Retry-After') && $options['retry_only_if_retry_after_header']) {
-            return false;
-        } else {
-            return in_array($response->getStatusCode(), $statuses);
+        switch (true) {
+            case $this->countRemainingRetries($options) == 0:
+                return false;
+
+            // No response object?  Can't evaluate HTTP response
+            case (! $response):
+                return false;
+
+            // No Retry-After header, and it is required?  Give up
+            case (! $response->hasHeader('Retry-After') && $options['retry_only_if_retry_after_header']):
+                return false;
+
+            // Conditions met; see if status code matches one that can be retried
+            default:
+                return in_array($response->getStatusCode(), $statuses);
         }
+    }
+
+    /**
+     * Count the number of retries remaining.  Always returns 0 or greater.
+     * @param array $options
+     * @return int
+     */
+    private function countRemainingRetries(array $options)
+    {
+        $retryCount  = isset($options['retry_count']) ? (int) $options['retry_count'] : 0;
+
+        $numAllowed  = isset($options['max_retry_attempts'])
+            ? (int) $options['max_retry_attempts']
+            : $this->defaultOptions['max_retry_attempts'];
+
+        return max([$numAllowed - $retryCount, 0]);
+
     }
 
     /**
@@ -185,17 +249,17 @@ class GuzzleRetryMiddleware
      * Increments the retry count, determines the delay (timeout), executes callbacks, sleeps, and re-send the request
      *
      * @param RequestInterface $request
-     * @param ResponseInterface $response
      * @param array $options
+     * @param ResponseInterface|null $response
      * @return
      */
-    protected function doRetry(RequestInterface $request, ResponseInterface $response, array $options)
+    protected function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
     {
         // Increment the retry count
         ++$options['retry_count'];
 
         // Determine the delay timeout
-        $delayTimeout = $this->determineDelayTimeout($response, $options);
+        $delayTimeout = $this->determineDelayTimeout($options, $response);
 
         // Callback?
         if ($options['on_retry_callback']) {
@@ -204,8 +268,8 @@ class GuzzleRetryMiddleware
                 $options['retry_count'],
                 $delayTimeout,
                 $request,
-                $response,
-                $options
+                $options,
+                $response
             );
         }
 
@@ -226,13 +290,13 @@ class GuzzleRetryMiddleware
      * @param array $options
      * @return float  Delay timeout, in seconds
      */
-    protected function determineDelayTimeout(ResponseInterface $response, array $options)
+    protected function determineDelayTimeout(array $options, ResponseInterface $response = null)
     {
         $default = $options['default_retry_multiplier'] * $options['retry_count'];
 
         // Retry-After can be a delay in seconds or a date
         // (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After)
-        if ($response->hasHeader('Retry-After')) {
+        if ($response && $response->hasHeader('Retry-After')) {
             return
                 $this->deriveTimeoutFromHeader($response->getHeader('Retry-After')[0])
                 ?: $default;
