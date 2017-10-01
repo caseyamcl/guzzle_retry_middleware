@@ -148,17 +148,13 @@ class GuzzleRetryMiddleware
     private function onRejected(RequestInterface $request, array $options)
     {
         return function ($reason) use ($request, $options) {
-
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
-
                 if ($this->shouldRetryHttpResponse($options, $reason->getResponse())) {
                     return $this->doRetry($request, $options, $reason->getResponse());
                 }
-
             // If this was a connection exception, test to see if we should retry based on connect timeout rules
             } elseif ($reason instanceof ConnectException) {
-
                 // If was another type of exception, test if we should retry based on timeout rules
                 if ($this->shouldRetryConnectException($reason, $options)) {
                     return $this->doRetry($request, $options);
@@ -230,7 +226,6 @@ class GuzzleRetryMiddleware
             : $this->defaultOptions['max_retry_attempts'];
 
         return max([$numAllowed - $retryCount, 0]);
-
     }
 
     /**

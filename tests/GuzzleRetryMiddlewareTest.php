@@ -439,8 +439,7 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 
         try {
             $client->request('GET', '/');
-        }
-        catch (ConnectException $e) {
+        } catch (ConnectException $e) {
             $errorNo = $e->getHandlerContext()['errno'];
         }
 
@@ -452,8 +451,7 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
      */
     public function testRetryCallbackReceivesExpectedArguments()
     {
-        $callback = function($retryCount, $delayTimeout, $request, $options, $response) {
-
+        $callback = function ($retryCount, $delayTimeout, $request, $options, $response) {
             $this->assertInternalType('int', $retryCount);
             $this->assertInternalType('float', $delayTimeout);
             $this->assertInstanceOf(RequestInterface::class, $request);
