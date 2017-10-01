@@ -17,7 +17,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Updated Guzzle requirement to v6.3 or newer
 
 ### Fixed
-- TODO: Clarified and cleaned up some documentation in README
+- TODO: Clarified and cleaned up some documentation in README, including a typo.
 
 ## v1.0 (2017-07-29)
 
