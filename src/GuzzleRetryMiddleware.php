@@ -18,7 +18,6 @@ namespace GuzzleRetry;
 
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -58,7 +57,7 @@ class GuzzleRetryMiddleware
         'on_retry_callback'                => null,
 
         // Retry on connect timeout?
-        'retry_on_connect_timeout'         => false
+        'retry_on_timeout'                 => false
     ];
 
     /**
@@ -153,7 +152,6 @@ class GuzzleRetryMiddleware
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
 
-
                 if ($this->shouldRetryHttpResponse($options, $reason->getResponse())) {
                     return $this->doRetry($request, $options, $reason->getResponse());
                 }
@@ -162,7 +160,7 @@ class GuzzleRetryMiddleware
             } elseif ($reason instanceof ConnectException) {
 
                 // If was another type of exception, test if we should retry based on timeout rules
-                if ($this->shouldRetryTransferException($reason, $options)) {
+                if ($this->shouldRetryConnectException($reason, $options)) {
                     return $this->doRetry($request, $options);
                 }
             }
@@ -172,24 +170,20 @@ class GuzzleRetryMiddleware
         };
     }
 
-    private function shouldRetryTransferException(TransferException $e, array $options)
+    private function shouldRetryConnectException(ConnectException $e, array $options)
     {
-
         switch (true) {
             case $this->countRemainingRetries($options) == 0:
                 return false;
 
-            // Test if this was a connection timeout exception
-            case ($e instanceOf ConnectException)
-                && isset($e->getHandlerContext()['errno'])
-                && $e->getHandlerContext()['errno'] == 28:
-                return isset($options['retry_on_connect_timeout']) && $options['retry_on_connect_timeout'] == true;
+            // Test if this was a connection or response timeout exception
+            case isset($e->getHandlerContext()['errno']) && $e->getHandlerContext()['errno'] == 28:
+                return isset($options['retry_on_timeout']) && $options['retry_on_timeout'] == true;
 
             // No conditions met, so return false
             default:
                 return false;
         }
-
     }
 
     /**
@@ -204,16 +198,12 @@ class GuzzleRetryMiddleware
      * @param ResponseInterface|null $response
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
-    private function shouldRetryHttpResponse(array $options, ResponseInterface $response = null)
+    private function shouldRetryHttpResponse(array $options, ResponseInterface $response)
     {
         $statuses = array_map('intval', (array) $options['retry_on_status']);
 
         switch (true) {
             case $this->countRemainingRetries($options) == 0:
-                return false;
-
-            // No response object?  Can't evaluate HTTP response
-            case (! $response):
                 return false;
 
             // No Retry-After header, and it is required?  Give up
@@ -265,8 +255,8 @@ class GuzzleRetryMiddleware
         if ($options['on_retry_callback']) {
             call_user_func(
                 $options['on_retry_callback'],
-                $options['retry_count'],
-                $delayTimeout,
+                (int) $options['retry_count'],
+                (float) $delayTimeout,
                 $request,
                 $options,
                 $response

@@ -18,13 +18,15 @@ namespace GuzzleRetry;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * GuzzleRetryMiddlewareTest
@@ -89,19 +91,21 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Test that the max_retry_attempts parameter is respected
+     *
+     * @dataProvider retriesFailAfterSpecifiedLimitProvider
+     * @param array $responses
      */
-    public function testRetriesFailAfterSpecifiedLimit()
+    public function testRetriesFailAfterSpecifiedLimit(array $responses)
     {
         $retryCount = 0;
 
-        // Build 10 responses with 429 headers
-        $responses = array_fill(0, 10, new Response(429, [], 'Wait'));
         $stack = HandlerStack::create(new MockHandler($responses));
 
         $stack->push(GuzzleRetryMiddleware::factory([
             'max_retry_attempts'       => 5, // Allow only 5 attempts
+            'retry_on_timeout'         => true,
             'default_retry_multiplier' => 0,
-            'on_retry_callback' => function ($num) use (&$retryCount) {
+            'on_retry_callback'        => function ($num) use (&$retryCount) {
                 $retryCount = $num;
             }
         ]));
@@ -110,9 +114,33 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 
         try {
             $client->request('GET', '/');
-        } catch (ClientException $e) {
+        } catch (TransferException $e) {
             $this->assertEquals(5, $retryCount);
         }
+    }
+
+    /**
+     * Returns Data sets for testRetriesFailAfterSpecifiedLimit
+     *
+     * #0 is a collection of 10 429 exceptions, and data-set
+     * #1 is a collection of 10 connect timeouts
+     *
+     * @return array
+     */
+    public function retriesFailAfterSpecifiedLimitProvider()
+    {
+        $http429Response = new Response(429, [], 'Wait');
+        $connectException = new ConnectException(
+            'Connect Timeout',
+            new Request('GET', '/'),
+            null,
+            ['errno' => 28]
+        );
+
+        return [
+            [array_fill(0, 10, $http429Response)],
+            [array_fill(0, 10, $connectException)]
+        ];
     }
 
     /**
@@ -362,5 +390,109 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client(['handler' => $stack]);
         $client->request('GET', '/');
+    }
+
+    public function testConnectTimeoutIsHandledWhenOptionIsSetToTrue()
+    {
+        // Send a connect timeout (cURL error 28) then a good response
+        $responses = [
+
+            new ConnectException(
+                'Connection timed out',
+                new Request('get', '/'),
+                null,
+                ['errno' => 28]
+            ),
+
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_timeout' => true])); // Enable connect timeout
+
+        $client = new Client(['handler' => $stack]);
+        $response = $client->request('GET', '/');
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testConnectTimeoutIsNotHandledWhenOptionIsSetToFalse()
+    {
+        // Send a connect timeout (cURL error 28) then a good response
+        $responses = [
+
+            new ConnectException(
+                'Connection timed out',
+                new Request('get', '/'),
+                null,
+                ['errno' => 28]
+            ),
+
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_connect_timeout' => false])); // DISABLE connect timeout
+
+        $client = new Client(['handler' => $stack]);
+        $errorNo = null;
+
+        try {
+            $client->request('GET', '/');
+        }
+        catch (ConnectException $e) {
+            $errorNo = $e->getHandlerContext()['errno'];
+        }
+
+        $this->assertEquals(28, $errorNo);
+    }
+
+    /**
+     * Ensure retry callback accepts expected arguments
+     */
+    public function testRetryCallbackReceivesExpectedArguments()
+    {
+        $callback = function($retryCount, $delayTimeout, $request, $options, $response) {
+
+            $this->assertInternalType('int', $retryCount);
+            $this->assertInternalType('float', $delayTimeout);
+            $this->assertInstanceOf(RequestInterface::class, $request);
+            $this->assertInternalType('array', $options);
+            $this->assertInstanceOf(ResponseInterface::class, $response);
+        };
+
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => 0,
+            'on_retry_callback' => $callback
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+    }
+
+    /**
+     * The only use-case that exists for connect exceptions is timeouts
+     *
+     * @expectedException \GuzzleHttp\Exception\ConnectException
+     */
+    public function testNonTimeoutConnectExceptionIsNotRetried()
+    {
+        // Send a connect timeout (cURL error 28) then a good response
+        $responses = [
+            new ConnectException('Non-timeout issue', new Request('get', '/')),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_connect_timeout' => true])); // DISABLE connect timeout
+
+        $client = new Client(['handler' => $stack]);
+        $client->get('/');
     }
 }
