@@ -44,7 +44,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleRetry\GuzzleRetryMiddleware;
 
 $stack = HandlerStack::create();
-$stack->push(GuzzleRetryAfterHandler());
+$stack->push(GuzzleRetryMiddleware());
 
 $client = new Client($stack);
 
