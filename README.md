@@ -8,7 +8,8 @@
 [![Total Downloads][ico-downloads]][link-downloads]
 
 This is a [Guzzle v6](http://guzzlephp.org) middleware library that implements automatic
-retry of requests when responses with `503` or `429` status codes are returned. 
+retry of requests when responses with `503` or `429` status codes are returned.  It can also
+be configured to retry requests that timeout.
  
 If a server supplies a [Retry-After header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After), 
 this middleware will delay subsequent requests per the server's instructed wait period.
@@ -21,6 +22,7 @@ Features, at-a-glance:
 - Automatically retries HTTP requests when a server responds with a 429 or 503 status (this is configurable)
 - Sets a retry delay based on the `Retry-After` HTTP header, if it is sent, or automatically backs off exponentially if
   no `Retry-After` header is sent (also configurable)
+- Optionally retries requests that time out (based on the `connect_timeout` or `timeout` options)
 - Set an optional callback when a retry occurs (useful for logging/reporting)
 - Specify a maximum number of retry attempts before giving up (default: 10)
 - 100% test coverage, good inline documentation, and PSR-2 compliant
@@ -44,7 +46,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleRetry\GuzzleRetryMiddleware;
 
 $stack = HandlerStack::create();
-$stack->push(GuzzleRetryMiddleware());
+$stack->push(GuzzleRetryMiddleware::factory());
 
 $client = new Client($stack);
 
@@ -71,6 +73,7 @@ The following options are available:
 | `retry_on_status`                  | array<int> | 503, 429 | The response status codes that will trigger a retry
 | `default_retry_multiplier`         | float      | 1.5      | What to multiple the number of requests by if `RetryAfter` not supplied
 | `on_retry_callback`                | callable   | null     | Optional callback to call when a retry occurs
+| `retry_on_timeout`                 | boolean    | false    | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
 
 Each option is discussed in detail below.
 
@@ -109,8 +112,8 @@ $stack->push(GuzzleRetryMiddleware([
 ```
 
 If you specify options in two or more places, the configuration is merged as follows:
- 
-1. request options taking precedence over Guzzle constructor options 
+
+1. Request options take precedence over Guzzle constructor options
 2. Guzzle constructor options take precedence over middleware constructor options.
 
 ### Setting maximum retry attempts
@@ -214,13 +217,13 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Listen for retry events
  *
- * @param int               $attemptNumber  How many attempts have been tried for this particular request
- * @param float             $delay          How long the client will wait before retrying the request
- * @param RequestInterface  $request        Request
- * @param ResponseInterface $response       Response
- * @param array             $options        Guzzle request options
+ * @param int                    $attemptNumber  How many attempts have been tried for this particular request
+ * @param float                  $delay          How long the client will wait before retrying the request
+ * @param RequestInterface       $request        Request
+ * @param array                  $options        Guzzle request options
+ * @param ResponseInterface|null $response       Response (or NULL if response not sent; e.g. connect timeout)
  */
-$listener = function($attemptNumber, $delay, $request, $response, $options) {
+$listener = function($attemptNumber, $delay, $request, $options, $response) {
     
     echo sprintf(
         "Retrying request to %s.  Server responded with %s.  Will wait %s seconds.  This is attempt #%s,
