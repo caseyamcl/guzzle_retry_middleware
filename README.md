@@ -207,10 +207,16 @@ You can configure this middleware to retry requests that timeout.  Simply set th
 
 ```php
 
-# Retry this request if it times out
+# Retry this request if it times out:
 $response = $client->get('/some-path', [
-    'retry_on_timeout` => true
+    'retry_on_timeout` => true    // Set the retry middleware to retry when the connection or response times out
+    'connect_timeout'  => 20,     // This is a built-in Guzzle option
+    'timeout'          => 50      // This is also a built-in Guzzle option
 ]);
+
+# You can also set these as defaults for every request:
+$guzzle = new \GuzzleHttp\Client(['retry_on_timeout' => true, 'connect_timeout' => 20]);
+$response = $guzzle->get('https://example.org');
 ```
 
 
