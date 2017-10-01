@@ -201,6 +201,18 @@ $response = $client->get('/some-path', [
 
 ```
 
+### Retrying requests that timeout
+
+You can configure this middleware to retry requests that timeout.  Simply set the `retry_on_timeout` option to `true`:
+
+```php
+
+# Retry this request if it times out
+$response = $client->get('/some-path', [
+    'retry_on_timeout` => true
+]);
+```
+
 
 ### On-Retry callback
 
