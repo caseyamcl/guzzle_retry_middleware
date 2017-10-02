@@ -4,7 +4,7 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## v2.0 (2017-10-01)
+## v2.0 (2017-10-02)
 
 ### Added
 - Added ability to retry on connect or request timeout (`retry_on_timeout` option)
