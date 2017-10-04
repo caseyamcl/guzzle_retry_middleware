@@ -71,7 +71,7 @@ The following options are available:
 | `max_retry_attempts`               | integer    | 10       | Maximum number of retries per request
 | `retry_only_if_retry_after_header` | boolean    | false    | Retry only if `RetryAfter` header sent
 | `retry_on_status`                  | array<int> | 503, 429 | The response status codes that will trigger a retry
-| `default_retry_multiplier`         | float      | 1.5      | What to multiple the number of requests by if `RetryAfter` not supplied
+| `default_retry_multiplier`         | float      | 1.5      | Value to multiply the number of requests by if `RetryAfter` not supplied
 | `on_retry_callback`                | callable   | null     | Optional callback to call when a retry occurs
 | `retry_on_timeout`                 | boolean    | false    | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
 
@@ -136,6 +136,8 @@ $client->get('/some/url', ['max_retry_attempts' => 0]);
 
 ### Setting status codes to retry
 
+By default, this middleware will retry requests when the server responds with a `429` or `503` HTTP status code.  But, you can configure this:
+
 ```php
 
 $response = $client->get('/some-path', [
@@ -176,16 +178,16 @@ Without `RetryAfter`, the number of requests is multiplied by the multiplier (de
       Client                 Server
       ------                 ------
       GET /resource    -> 
-                       <-    429 Response (no header)
+                       <-    429 Response (no Retry-After header)
       wait 1.5 x 1s                 
       GET /resource    ->   
-                       <-    429 Response (no header)
+                       <-    429 Response (no Retry-After header)
       wait 1.5 x 2s                 
       GET /resource    ->   
-                       <-    429 Response (no header)
+                       <-    429 Response (no Retry-After header)
       wait 1.5 x 3s                 
       GET /resource    ->   
-                       <-    429 Response (no header)
+                       <-    429 Response (no Retry-After header)
       wait 1.5 x 4s                 
       GET /resource    ->   
                        <-    200 OK
@@ -209,7 +211,7 @@ You can configure this middleware to retry requests that timeout.  Simply set th
 
 # Retry this request if it times out:
 $response = $client->get('/some-path', [
-    'retry_on_timeout` => true    // Set the retry middleware to retry when the connection or response times out
+    'retry_on_timeout' => true    // Set the retry middleware to retry when the connection or response times out
     'connect_timeout'  => 20,     // This is a built-in Guzzle option
     'timeout'          => 50      // This is also a built-in Guzzle option
 ]);
