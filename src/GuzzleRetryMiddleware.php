@@ -126,7 +126,7 @@ class GuzzleRetryMiddleware
      * @param array $options
      * @return callable
      */
-    private function onFulfilled(RequestInterface $request, array $options)
+    protected function onFulfilled(RequestInterface $request, array $options)
     {
         return function (ResponseInterface $response) use ($request, $options) {
             return ($this->shouldRetryHttpResponse($options, $response))
@@ -145,7 +145,7 @@ class GuzzleRetryMiddleware
      * @param array $options
      * @return callable
      */
-    private function onRejected(RequestInterface $request, array $options)
+    protected function onRejected(RequestInterface $request, array $options)
     {
         return function ($reason) use ($request, $options) {
             // If was bad response exception, test if we retry based on the response headers
@@ -166,7 +166,7 @@ class GuzzleRetryMiddleware
         };
     }
 
-    private function shouldRetryConnectException(ConnectException $e, array $options)
+    protected function shouldRetryConnectException(ConnectException $e, array $options)
     {
         switch (true) {
             case $this->countRemainingRetries($options) == 0:
@@ -194,7 +194,7 @@ class GuzzleRetryMiddleware
      * @param ResponseInterface|null $response
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
-    private function shouldRetryHttpResponse(array $options, ResponseInterface $response)
+    protected function shouldRetryHttpResponse(array $options, ResponseInterface $response)
     {
         $statuses = array_map('intval', (array) $options['retry_on_status']);
 
@@ -217,7 +217,7 @@ class GuzzleRetryMiddleware
      * @param array $options
      * @return int
      */
-    private function countRemainingRetries(array $options)
+    protected function countRemainingRetries(array $options)
     {
         $retryCount  = isset($options['retry_count']) ? (int) $options['retry_count'] : 0;
 
@@ -298,7 +298,7 @@ class GuzzleRetryMiddleware
      * @param string $headerValue
      * @return float|null  The number of seconds to wait, or NULL if unsuccessful (invalid header)
      */
-    private function deriveTimeoutFromHeader($headerValue)
+    protected function deriveTimeoutFromHeader($headerValue)
     {
         // The timeout will either be a number or a HTTP-formatted date,
         // or seconds (integer)
