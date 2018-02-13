@@ -364,8 +364,8 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(GuzzleRetryMiddleware::factory([
-            'default_retry_multiplier' => function($numRetries, ResponseInterface $response = null) use (&$programmedDelays) {
-                return $programmedDelays[$numRetries-1];
+            'default_retry_multiplier' => function ($num, ResponseInterface $response = null) use (&$programmedDelays) {
+                return $programmedDelays[$num-1];
             },
             'on_retry_callback' => function ($numRetries, $delay) use (&$actualDelays) {
                 $actualDelays[] = $delay;
@@ -548,8 +548,7 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         try {
             $response = $client->get('/', ['retry_enabled' => false]);
             $code = $response->getStatusCode();
-        }
-        catch (ClientException $e) {
+        } catch (ClientException $e) {
             $code = $e->getResponse()->getStatusCode();
         }
 

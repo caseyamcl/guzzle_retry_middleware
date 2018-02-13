@@ -174,7 +174,6 @@ class GuzzleRetryMiddleware
     protected function shouldRetryConnectException(ConnectException $e, array $options)
     {
         switch (true) {
-
             case $options['retry_enabled'] === false:
                 return false;
 
@@ -208,7 +207,6 @@ class GuzzleRetryMiddleware
         $statuses = array_map('intval', (array) $options['retry_on_status']);
 
         switch (true) {
-
             case $options['retry_enabled'] === false:
                 return false;
 
@@ -296,8 +294,7 @@ class GuzzleRetryMiddleware
                 $options['retry_count'],
                 $response
             );
-        }
-        else {
+        } else {
             $defaultDelayTimeout = (float) $options['default_retry_multiplier'] * $options['retry_count'];
         }
 
