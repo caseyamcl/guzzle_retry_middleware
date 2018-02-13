@@ -18,6 +18,7 @@ namespace GuzzleRetry;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\TransferException;
@@ -492,5 +493,39 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client(['handler' => $stack]);
         $client->get('/');
+    }
+
+    /**
+     * Test that setting `retry_enabled` to FALSE on an individual request actually disables retries
+     */
+    public function testRetryEnableSettingOverridesDefaultConfigurationPerRequest()
+    {
+        $responses = [
+            new Response(429, [], 'Wait'), // Queue for request with retry enabled
+            new Response(200, [], 'Good'),
+
+            new Response(429, [], 'Wait'), // Queue for request with retry disabled
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+        $client = new Client(['handler' => $stack]);
+
+        // Default should retry and get the response with 200
+        $response = $client->get('/');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // Now we disable retry and we should get the 429
+
+        try {
+            $response = $client->get('/', ['retry_enabled' => false]);
+            $code = $response->getStatusCode();
+        }
+        catch (ClientException $e) {
+            $code = $e->getResponse()->getStatusCode();
+        }
+
+        $this->assertEquals(429, $code); // should be the first response queued
     }
 }

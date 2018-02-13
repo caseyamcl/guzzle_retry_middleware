@@ -68,6 +68,7 @@ The following options are available:
 
 | Option                             | Type       | Default  | Summary |
 | ---------------------------------- | ---------- | -------- | ------- |
+| `retry_enabled`                    | boolean    | true     | Is retry enabled (useful for disabling for individual requests)
 | `max_retry_attempts`               | integer    | 10       | Maximum number of retries per request
 | `retry_only_if_retry_after_header` | boolean    | false    | Retry only if `RetryAfter` header sent
 | `retry_on_status`                  | array<int> | 503, 429 | The response status codes that will trigger a retry
@@ -262,6 +263,25 @@ $response = $client->get('/some/path');
 
 ```
 
+### Enabling or disabling per-request
+
+Suppose that you have setup default retry options as follows:
+
+```php
+$stack = \GuzzleHttp\Stack::create();
+$stack->push(GuzzleRetryMiddleware(['max_retry_attempts' => 5]));
+$client = new \GuzzleHttp\Client(['handler' => $stack]);
+```
+
+You can disable retry for individual requests as by setting the `retry_enabled` parameter in the request options:
+
+```php
+// Retry will NOT be attempted for this request..
+$client->get('http://example.org', ['retry_enabled' => false]);
+
+// Retry WILL be attempted for this request...
+$client->get('http://example.org');
+``` 
 
 ## Change log
 
