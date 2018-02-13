@@ -41,6 +41,9 @@ class GuzzleRetryMiddleware
      */
     private $defaultOptions = [
 
+        // Retry enabled.  Toggle retry on or off per request
+        'retry_enabled'                    => true,
+
         // If server doesn't provide a Retry-After header, then set a default back-off delay
         'default_retry_multiplier'         => 1.5,
 
@@ -96,6 +99,7 @@ class GuzzleRetryMiddleware
     /**
      * @param RequestInterface $request
      * @param array $options
+     * @return Promise
      */
     public function __invoke(RequestInterface $request, array $options)
     {
@@ -107,7 +111,7 @@ class GuzzleRetryMiddleware
             $options['retry_count'] = 0;
         }
 
-        /** @var Promise $next */
+        /** @var callable $next */
         $next = $this->nextHandler;
         return $next($request, $options)
             ->then(
@@ -169,6 +173,10 @@ class GuzzleRetryMiddleware
     protected function shouldRetryConnectException(ConnectException $e, array $options)
     {
         switch (true) {
+
+            case $options['retry_enabled'] === false:
+                return false;
+
             case $this->countRemainingRetries($options) == 0:
                 return false;
 
@@ -199,6 +207,10 @@ class GuzzleRetryMiddleware
         $statuses = array_map('intval', (array) $options['retry_on_status']);
 
         switch (true) {
+
+            case $options['retry_enabled'] === false:
+                return false;
+
             case $this->countRemainingRetries($options) == 0:
                 return false;
 
