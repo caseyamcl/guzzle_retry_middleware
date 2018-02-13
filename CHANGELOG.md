@@ -8,6 +8,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Added
 - Added `retry_enabled` parameter to allow quick disable of retry on specific requests
+- Added ability to pass in a callable to `default_retry_multiplier` in order to implement custom delay logic
 
 ## v2.0 (2017-10-02)
 

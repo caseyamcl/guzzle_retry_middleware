@@ -350,6 +350,33 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
+    public function testRetryMultiplierWorksAsCallback()
+    {
+        $programmedDelays = [0.5, 0.1, 0.3];
+        $actualDelays     = [];
+
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => function($numRetries, ResponseInterface $response = null) use (&$programmedDelays) {
+                return $programmedDelays[$numRetries-1];
+            },
+            'on_retry_callback' => function ($numRetries, $delay) use (&$actualDelays) {
+                $actualDelays[] = $delay;
+            }
+        ]));
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+
+        $this->assertEquals($programmedDelays, $actualDelays);
+    }
+
     /**
      * Test that BadResponseException and child classes are caught and handled
      */

@@ -45,6 +45,7 @@ class GuzzleRetryMiddleware
         'retry_enabled'                    => true,
 
         // If server doesn't provide a Retry-After header, then set a default back-off delay
+        // NOTE: This can either be a float, or it can be a callable that returns a (accepts count and response|null)
         'default_retry_multiplier'         => 1.5,
 
         // Set a maximum number of attempts per request
@@ -289,16 +290,25 @@ class GuzzleRetryMiddleware
      */
     protected function determineDelayTimeout(array $options, ResponseInterface $response = null)
     {
-        $default = $options['default_retry_multiplier'] * $options['retry_count'];
+        if (is_callable($options['default_retry_multiplier'])) {
+            $defaultDelayTimeout = (float) call_user_func(
+                $options['default_retry_multiplier'],
+                $options['retry_count'],
+                $response
+            );
+        }
+        else {
+            $defaultDelayTimeout = (float) $options['default_retry_multiplier'] * $options['retry_count'];
+        }
 
         // Retry-After can be a delay in seconds or a date
         // (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After)
         if ($response && $response->hasHeader('Retry-After')) {
             return
                 $this->deriveTimeoutFromHeader($response->getHeader('Retry-After')[0])
-                ?: $default;
+                ?: $defaultDelayTimeout;
         } else {
-            return $default;
+            return $defaultDelayTimeout;
         }
     }
 
