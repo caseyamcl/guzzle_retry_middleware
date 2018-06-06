@@ -26,6 +26,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -34,7 +35,7 @@ use Psr\Http\Message\ResponseInterface;
  *
  * @author Casey McLaughlin <caseyamcl@gmail.com>
  */
-class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
+class GuzzleRetryMiddlewareTest extends TestCase
 {
     /**
      * Simple instantiation test provides immediate feedback on syntax errors
@@ -49,9 +50,10 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
     /**
      * Test retry occurs when status codes match or do not match
      *
-     * @dataProvider testRetryOccursWhenStatusCodeMatchesProvider
+     * @dataProvider providerForRetryOccursWhenStatusCodeMatches
      * @param Response $response
      * @param bool $retryShouldOccur
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testRetryOccursWhenStatusCodeMatches(Response $response, $retryShouldOccur)
     {
@@ -81,7 +83,7 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
      *
      * @return array
      */
-    public function testRetryOccursWhenStatusCodeMatchesProvider()
+    public function providerForRetryOccursWhenStatusCodeMatches()
     {
         return [
             [new Response(429, [], 'back off'),       true],
@@ -95,6 +97,7 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
      *
      * @dataProvider retriesFailAfterSpecifiedLimitProvider
      * @param array $responses
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testRetriesFailAfterSpecifiedLimit(array $responses)
     {
