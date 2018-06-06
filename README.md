@@ -298,6 +298,40 @@ $client->get('http://example.org', ['retry_enabled' => false]);
 $client->get('http://example.org');
 ``` 
 
+### Adding a custom retry header to HTTP responses
+
+Sometimes for debugging purposes, it is useful to know how many times a request was retried when getting a response.
+For this purpose, this library can add a custom header to responses; simply set the `expose_retry_header` option 
+to `TRUE`.  
+
+NOTE: This modifies the HTTP response on the client.  If you don't want to alter the response retrieved from the
+server, you can also use [callbacks](#on-retry-callback) to get the request count.
+
+Example:
+
+```php
+# Retry this request if it times out:
+$response = $client->get('/some-path', [
+    'expose_retry_header' => true  // This adds the 'X-Retry-Counter' if a request was retried
+]);
+
+# If a request was retried, the response will include the 'X-Retry-Counter'
+$numRetries = (int) $response->getHeaderLine('X-Retry-Counter');
+```
+
+You can also specify a custom header key:
+
+```php
+# Retry this request if it times out:
+$response = $client->get('/some-path', [
+    'expose_retry_header' => true,
+    'retry_header'        => 'X-Retry-Count'
+]);
+
+# If a request was retried, the response will include the 'X-Retry-Counter'
+$numRetries = (int) $response->getHeaderLine('X-Retry-Count');
+```
+
 ## Change log
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
