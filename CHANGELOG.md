@@ -4,6 +4,23 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## v2.2 (2018-06-03)
+### Added
+- Added `expose_retry_header` and `retry_header` options for debugging purposes (thanks, @coudenysj)
+- Travis CI now tests PHP v7.2
+
+### Changed
+- Allow newer versions of PHPUnit in `composer.json` (match Guzzle composer.json PHPUnit requirements)
+
+### Fixed
+- Refactored data provider method name in PHPUnit test (`testRetryOccursWhenStatusCodeMatchesProvider` 
+  → `providerForRetryOccursWhenStatusCodeMatches`)
+- Use PHPUnit new namespaced class name
+- Fix `phpunit.xml.dist` specification so that PHPUnit no longer emits warnings
+
+### Removed
+- `hhvm` tests in Travis CI; they were causing builds to fail
+
 ## v2.1 (2018-02-13)
 
 ### Added
