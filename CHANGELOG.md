@@ -17,6 +17,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
   → `providerForRetryOccursWhenStatusCodeMatches`)
 - Use PHPUnit new namespaced class name
 - Fix `phpunit.xml.dist` specification so that PHPUnit no longer emits warnings
+- Travis CI should use lowest library versions on lowest supported version of PHP (v5.5, not 5.6)  
 
 ### Removed
 - `hhvm` tests in Travis CI; they were causing builds to fail
