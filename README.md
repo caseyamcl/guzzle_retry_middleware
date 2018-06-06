@@ -356,6 +356,9 @@ If you discover any security related issues, please email caseyamcl@gmail.com in
 ## Credits
 
 - [Casey McLaughlin][link-author]
+- [Jachim Coudenys](/coudenys)
+- [Markus Podar](/mfn)
+- [All contributors][link-contributors]
 
 ## License
 
