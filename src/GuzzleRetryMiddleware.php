@@ -36,6 +36,7 @@ class GuzzleRetryMiddleware
     // HTTP date format
     const DATE_FORMAT = 'D, d M Y H:i:s T';
 
+    // Default retry header (off by default; configurable)
     const RETRY_HEADER = 'X-Retry-Counter';
 
     /**
