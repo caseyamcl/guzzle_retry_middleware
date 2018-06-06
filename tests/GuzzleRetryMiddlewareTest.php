@@ -178,6 +178,62 @@ class GuzzleRetryMiddlewareTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test that the X header is injected when requested
+     */
+    public function testHeaderIsInjectedWhenRequested()
+    {
+        // Build 2 responses with 429 headers and one good one
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait...'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+
+        $client = new Client([
+            'handler' => $stack,
+
+            // set some defaults in Guzzle..
+            'default_retry_multiplier' => 0,
+            'max_retry_attempts'       => 2,
+            'expose_retry_header'            => true
+        ]);
+
+        $response = $client->request('GET', '/');
+        $this->assertTrue($response->hasHeader(GuzzleRetryMiddleware::RETRY_HEADER));
+        $this->assertEquals([2], $response->getHeader(GuzzleRetryMiddleware::RETRY_HEADER));
+        $this->assertEquals('Good', (string) $response->getBody());
+    }
+
+    /**
+     * Test that the X header is not injected when no retries occurred
+     */
+    public function testHeaderIsNotInjectedWhenNoRetriesOccurred()
+    {
+        $responses = [
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+
+        $client = new Client([
+            'handler' => $stack,
+
+            // set some defaults in Guzzle..
+            'default_retry_multiplier' => 0,
+            'max_retry_attempts'       => 2,
+            'expose_retry_header'            => true
+        ]);
+
+        $response = $client->request('GET', '/');
+        $this->assertFalse($response->hasHeader(GuzzleRetryMiddleware::RETRY_HEADER));
+        $this->assertEquals('Good', (string) $response->getBody());
+    }
+
+    /**
      * Test that setting options per request overrides other options correctly
      */
     public function testOptionsCanBeSetInRequest()

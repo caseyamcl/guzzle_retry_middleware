@@ -66,15 +66,17 @@ until giving up after 10 attempts.
 
 The following options are available:
 
-| Option                             | Type              | Default  | Summary |
-| ---------------------------------- | ----------------- | -------- | ------- |
-| `retry_enabled`                    | boolean           | true     | Is retry enabled (useful for disabling for individual requests)
-| `max_retry_attempts`               | integer           | 10       | Maximum number of retries per request
-| `retry_only_if_retry_after_header` | boolean           | false    | Retry only if `RetryAfter` header sent
-| `retry_on_status`                  | array<int>        | 503, 429 | The response status codes that will trigger a retry
-| `default_retry_multiplier`         | float or callable | 1.5      | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details)
-| `on_retry_callback`                | callable          | null     | Optional callback to call when a retry occurs
-| `retry_on_timeout`                 | boolean           | false    | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
+| Option                             | Type              | Default         | Summary |
+| ---------------------------------- | ----------------- | --------------- | ------- |
+| `retry_enabled`                    | boolean           | true            | Is retry enabled (useful for disabling for individual requests)
+| `max_retry_attempts`               | integer           | 10              | Maximum number of retries per request
+| `retry_only_if_retry_after_header` | boolean           | false           | Retry only if `RetryAfter` header sent
+| `retry_on_status`                  | array<int>        | 503, 429        | The response status codes that will trigger a retry
+| `default_retry_multiplier`         | float or callable | 1.5             | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details)
+| `on_retry_callback`                | callable          | null            | Optional callback to call when a retry occurs
+| `retry_on_timeout`                 | boolean           | false           | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
+| `expose_retry_header`              | boolean           | false           | Set to TRUE if you wish to expose the number of retries as a header on the response object
+| `retry_header`                     | string            | X-Retry-Counter | The header key to use
 
 Each option is discussed in detail below.
 

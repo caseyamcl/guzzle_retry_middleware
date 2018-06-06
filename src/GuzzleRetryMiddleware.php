@@ -36,6 +36,8 @@ class GuzzleRetryMiddleware
     // HTTP date format
     const DATE_FORMAT = 'D, d M Y H:i:s T';
 
+    const RETRY_HEADER = 'X-Retry-Counter';
+
     /**
      * @var array
      */
@@ -61,7 +63,13 @@ class GuzzleRetryMiddleware
         'on_retry_callback'                => null,
 
         // Retry on connect timeout?
-        'retry_on_timeout'                 => false
+        'retry_on_timeout'                 => false,
+
+        // Add the number of retries to an X-Header
+        'expose_retry_header'              => false,
+
+        // The header key
+        'retry_header'                     => self::RETRY_HEADER
     ];
 
     /**
@@ -136,7 +144,7 @@ class GuzzleRetryMiddleware
         return function (ResponseInterface $response) use ($request, $options) {
             return ($this->shouldRetryHttpResponse($options, $response))
                 ? $this->doRetry($request, $options, $response)
-                : $response;
+                : $this->returnResponse($options, $response);
         };
     }
 
@@ -274,6 +282,17 @@ class GuzzleRetryMiddleware
 
         // Return
         return $this($request, $options);
+    }
+
+    protected function returnResponse(array $options, ResponseInterface $response)
+    {
+        if ($options['expose_retry_header'] === false
+            || $options['retry_count'] === 0
+        ) {
+            return $response;
+        }
+
+        return $response->withHeader($options['retry_header'], $options['retry_count']);
     }
 
     /**
