@@ -5,6 +5,7 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
 ## v2.2 (2018-06-03)
+
 ### Added
 - Added `expose_retry_header` and `retry_header` options for debugging purposes (thanks, @coudenysj)
 - Travis CI now tests PHP v7.2
