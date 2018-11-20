@@ -107,7 +107,7 @@ $client = new \GuzzleHttp\Client([
 
 // When you instantiate the Retry middleware
 $stack = \GuzzleHttp\Stack::create();
-$stack->push(GuzzleRetryMiddleware([
+$stack->push(GuzzleRetryMiddleware::factory([
    'max_retry_attempts' => 5,
    'on_retry_callback'  => $notifier
 ]));
@@ -284,7 +284,7 @@ Suppose that you have setup default retry options as follows:
 
 ```php
 $stack = \GuzzleHttp\Stack::create();
-$stack->push(GuzzleRetryMiddleware(['max_retry_attempts' => 5]));
+$stack->push(GuzzleRetryMiddleware::factory(['max_retry_attempts' => 5]));
 $client = new \GuzzleHttp\Client(['handler' => $stack]);
 ```
 
