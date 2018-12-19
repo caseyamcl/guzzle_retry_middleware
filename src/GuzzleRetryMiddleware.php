@@ -143,7 +143,7 @@ class GuzzleRetryMiddleware
     protected function onFulfilled(RequestInterface $request, array $options)
     {
         return function (ResponseInterface $response) use ($request, $options) {
-            return ($this->shouldRetryHttpResponse($options, $response))
+            return $this->shouldRetryHttpResponse($options, $response)
                 ? $this->doRetry($request, $options, $response)
                 : $this->returnResponse($options, $response);
         };
@@ -186,12 +186,12 @@ class GuzzleRetryMiddleware
             case $options['retry_enabled'] === false:
                 return false;
 
-            case $this->countRemainingRetries($options) == 0:
+            case $this->countRemainingRetries($options) === 0:
                 return false;
 
             // Test if this was a connection or response timeout exception
             case isset($e->getHandlerContext()['errno']) && $e->getHandlerContext()['errno'] == 28:
-                return isset($options['retry_on_timeout']) && $options['retry_on_timeout'] == true;
+                return isset($options['retry_on_timeout']) && $options['retry_on_timeout'] === true;
 
             // No conditions met, so return false
             default:
@@ -213,13 +213,13 @@ class GuzzleRetryMiddleware
      */
     protected function shouldRetryHttpResponse(array $options, ResponseInterface $response)
     {
-        $statuses = array_map('intval', (array) $options['retry_on_status']);
+        $statuses = array_map('\intval', (array) $options['retry_on_status']);
 
         switch (true) {
             case $options['retry_enabled'] === false:
                 return false;
 
-            case $this->countRemainingRetries($options) == 0:
+            case $this->countRemainingRetries($options) === 0:
                 return false;
 
             // No Retry-After header, and it is required?  Give up
@@ -228,7 +228,7 @@ class GuzzleRetryMiddleware
 
             // Conditions met; see if status code matches one that can be retried
             default:
-                return in_array($response->getStatusCode(), $statuses);
+                return \in_array($response->getStatusCode(), $statuses, true);
         }
     }
 
@@ -268,7 +268,7 @@ class GuzzleRetryMiddleware
 
         // Callback?
         if ($options['on_retry_callback']) {
-            call_user_func(
+            \call_user_func(
                 $options['on_retry_callback'],
                 (int) $options['retry_count'],
                 (float) $delayTimeout,
@@ -308,8 +308,8 @@ class GuzzleRetryMiddleware
      */
     protected function determineDelayTimeout(array $options, ResponseInterface $response = null)
     {
-        if (is_callable($options['default_retry_multiplier'])) {
-            $defaultDelayTimeout = (float) call_user_func(
+        if (\is_callable($options['default_retry_multiplier'])) {
+            $defaultDelayTimeout = (float) \call_user_func(
                 $options['default_retry_multiplier'],
                 $options['retry_count'],
                 $response
@@ -324,9 +324,9 @@ class GuzzleRetryMiddleware
             return
                 $this->deriveTimeoutFromHeader($response->getHeader('Retry-After')[0])
                 ?: $defaultDelayTimeout;
-        } else {
-            return $defaultDelayTimeout;
         }
+
+        return $defaultDelayTimeout;
     }
 
     /**
@@ -341,12 +341,12 @@ class GuzzleRetryMiddleware
     {
         // The timeout will either be a number or a HTTP-formatted date,
         // or seconds (integer)
-        if ((string) intval(trim($headerValue)) == $headerValue) {
-            return intval(trim($headerValue));
+        if ((string) (int) trim($headerValue) === $headerValue) {
+            return (int) trim($headerValue);
         } elseif ($date = \DateTime::createFromFormat(self::DATE_FORMAT, trim($headerValue))) {
             return (int) $date->format('U') - time();
-        } else {
-            return null;
         }
+
+        return null;
     }
 }
