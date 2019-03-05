@@ -48,7 +48,7 @@ use GuzzleRetry\GuzzleRetryMiddleware;
 $stack = HandlerStack::create();
 $stack->push(GuzzleRetryMiddleware::factory());
 
-$client = new Client($stack);
+$client = new Client([$stack]);
 
 // Make requests galore...
 
