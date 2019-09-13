@@ -268,13 +268,15 @@ class GuzzleRetryMiddleware
 
         // Callback?
         if ($options['on_retry_callback']) {
-            \call_user_func(
+            \call_user_func_array(
                 $options['on_retry_callback'],
-                (int) $options['retry_count'],
-                (float) $delayTimeout,
-                $request,
-                $options,
-                $response
+                [
+                    (int) $options['retry_count'],
+                    (float) $delayTimeout,
+                    &$request,
+                    &$options,
+                    $response
+                ]
             );
         }
 

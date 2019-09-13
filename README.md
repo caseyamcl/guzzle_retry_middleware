@@ -245,6 +245,8 @@ reporting, or anything else you can think of.
 
 If you specify a callback, it will be called before the middleware calls the `usleep()` delay function.
 
+The `request` and `options` arguments are sent by reference in case you want to modify them in the callback.
+
 ```php
 
 use Psr\Http\Message\RequestInterface;
@@ -259,7 +261,7 @@ use Psr\Http\Message\ResponseInterface;
  * @param array                  $options        Guzzle request options
  * @param ResponseInterface|null $response       Response (or NULL if response not sent; e.g. connect timeout)
  */
-$listener = function($attemptNumber, $delay, $request, $options, $response) {
+$listener = function($attemptNumber, $delay, &$request, &$options, $response) {
     
     echo sprintf(
         "Retrying request to %s.  Server responded with %s.  Will wait %s seconds.  This is attempt #%s,
