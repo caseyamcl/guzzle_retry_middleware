@@ -4,6 +4,19 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## UNRELEASED
+
+### Added
+- PHP v7.3 tests in `.travis.yml`
+
+### Changed
+- Made minimum requirement for PHP v7.1 (note: this is considered a [compatible change](https://semver.org/#what-should-i-do-if-i-update-my-own-dependencies-without-changing-the-public-api))
+- Updated to Carbon 2.0 (only affects tests)
+
+### Removed
+- Removed unsupported tests for unsupported PHP versions from `.travis.yml` file
+- Removed support for older versions of PHPUnit 
+
 ## v2.2 (2018-06-03)
 
 ### Added
