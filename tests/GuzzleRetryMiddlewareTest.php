@@ -613,4 +613,51 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
         $this->assertEquals(429, $code); // should be the first response queued
     }
+
+    /**
+     * Test that modifying request and options inside the retry callback works
+     */
+    public function testRetryCallbackReferenceModification()
+    {
+        // Build one response with 429 headers and one good one
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $test_request = null;
+        $test_options = null;
+
+        // Use a middleware to grab the request and options arguments to store
+        // them for validation. This gets executed after GuzzleRetryMiddleware.
+        $middleware = function ($handler) use (&$test_request, &$test_options) {
+            return function ($request, $options
+            ) use ($handler, &$test_request, &$test_options) {
+                $test_request = $request;
+                $test_options = $options;
+                return $handler($request, $options);
+            };
+        };
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+        $stack->push($middleware);
+
+        $client = new Client([
+            'handler' => $stack,
+
+            // set some defaults in Guzzle..
+            'default_retry_multiplier' => 0,
+            'on_retry_callback'        => function ($attemptNumber, $delay, &$request, &$options) {
+                $request = $request->withHeader('TestHeader', 'GoodHeader');
+                $options['TestOption'] = 'GoodOption';
+            }
+        ]);
+
+        $client->request('GET', '/');
+
+        $this->assertEquals('GoodHeader', $test_request->getHeaderLine('TestHeader'));
+        $this->assertArrayHasKey('TestOption', $test_options);
+        $this->assertEquals('GoodOption', $test_options['TestOption']);
+    }
 }
