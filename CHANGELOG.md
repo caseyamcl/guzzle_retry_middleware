@@ -13,6 +13,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Changed
 - Made minimum requirement for PHP v7.1 (note: this is considered a [compatible change](https://semver.org/#what-should-i-do-if-i-update-my-own-dependencies-without-changing-the-public-api))
 - Updated to Carbon 2.0 (only affects tests)
+- The `$request` and `$options` variables are now passed by reference in the retry callback to allow for modification (thanks @Krunch!)  
 
 ### Removed
 - Removed unsupported tests for unsupported PHP versions from `.travis.yml` file

@@ -625,16 +625,16 @@ class GuzzleRetryMiddlewareTest extends TestCase
             new Response(200, [], 'Good')
         ];
 
-        $test_request = null;
-        $test_options = null;
+        $testRequest = null;
+        $testOptions = null;
 
         // Use a middleware to grab the request and options arguments to store
         // them for validation. This gets executed after GuzzleRetryMiddleware.
-        $middleware = function ($handler) use (&$test_request, &$test_options) {
+        $middleware = function ($handler) use (&$testRequest, &$testOptions) {
             return function ($request, $options
-            ) use ($handler, &$test_request, &$test_options) {
-                $test_request = $request;
-                $test_options = $options;
+            ) use ($handler, &$testRequest, &$testOptions) {
+                $testRequest = $request;
+                $testOptions = $options;
                 return $handler($request, $options);
             };
         };
@@ -656,8 +656,8 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
         $client->request('GET', '/');
 
-        $this->assertEquals('GoodHeader', $test_request->getHeaderLine('TestHeader'));
-        $this->assertArrayHasKey('TestOption', $test_options);
-        $this->assertEquals('GoodOption', $test_options['TestOption']);
+        $this->assertEquals('GoodHeader', $testRequest->getHeaderLine('TestHeader'));
+        $this->assertArrayHasKey('TestOption', $testOptions);
+        $this->assertEquals('GoodOption', $testOptions['TestOption']);
     }
 }
