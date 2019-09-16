@@ -179,7 +179,7 @@ class GuzzleRetryMiddleware
             // If this was a connection exception, test to see if we should retry based on connect timeout rules
             } elseif ($reason instanceof ConnectException) {
                 // If was another type of exception, test if we should retry based on timeout rules
-                if ($this->shouldRetryConnectException($reason, $options)) {
+                if ($this->shouldRetryConnectException($options)) {
                     return $this->doRetry($request, $options);
                 }
             }
@@ -190,25 +190,16 @@ class GuzzleRetryMiddleware
     }
 
     /**
-     * @param ConnectException $e
+     * Decide whether or not to retry on connect exception
+     *
      * @param array $options
      * @return bool
      */
-    protected function shouldRetryConnectException(ConnectException $e, array $options): bool
+    protected function shouldRetryConnectException(array $options): bool
     {
-        switch (true) {
-            case $options['retry_enabled'] === false:
-            case $this->countRemainingRetries($options) === 0:
-                return false;
-
-            // Test if this was a connection or response timeout exception
-            case isset($e->getHandlerContext()['errno']) && $e->getHandlerContext()['errno'] == 28:
-                return isset($options['retry_on_timeout']) && $options['retry_on_timeout'] === true;
-
-            // No conditions met, so return false
-            default:
-                return false;
-        }
+        return $options['retry_enabled']
+            && ($options['retry_on_timeout'] ?? false)
+            && $this->countRemainingRetries($options) > 0;
     }
 
     /**

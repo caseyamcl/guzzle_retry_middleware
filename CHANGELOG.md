@@ -21,6 +21,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Fixed
 - Always ensure positive integer used when calculating delay timeout (fixes #12)
+- Retry connect exception regardless of cURL error code (thanks @LeoniePhiline) (fixes #14)
 
 ## v2.2 (2018-06-03)
 
