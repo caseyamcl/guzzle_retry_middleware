@@ -340,7 +340,7 @@ class GuzzleRetryMiddleware
                 ?: $defaultDelayTimeout;
         }
 
-        return $defaultDelayTimeout;
+        return abs($defaultDelayTimeout);
     }
 
     /**

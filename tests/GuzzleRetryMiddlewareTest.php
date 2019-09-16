@@ -479,6 +479,36 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $client->request('GET', '/');
     }
 
+    /**
+     * Test edge-case where negative multplier calculated or used
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function testNegativeMultiplierActuallyWorks()
+    {
+        $delayTimes = [];
+
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => -0.5,
+            'on_retry_callback' => function ($numRetries, $delay) use (&$delayTimes) {
+                $delayTimes[] = $delay;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+
+        $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
+    }
+
     public function testConnectTimeoutIsHandledWhenOptionIsSetToTrue()
     {
         // Send a connect timeout (cURL error 28) then a good response

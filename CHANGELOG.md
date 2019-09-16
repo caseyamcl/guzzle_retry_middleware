@@ -19,6 +19,9 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Removed unsupported tests for unsupported PHP versions from `.travis.yml` file
 - Removed support for older versions of PHPUnit 
 
+### Fixed
+- Always ensure positive integer used when calculating delay timeout (fixes #12)
+
 ## v2.2 (2018-06-03)
 
 ### Added
