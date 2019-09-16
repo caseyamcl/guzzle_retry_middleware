@@ -22,12 +22,12 @@
         }
     ],
     "require": {
-        "php" : "~5.5|~7.0",
+        "php" : "^7.1",
         "guzzlehttp/guzzle": "^6.3"
     },
     "require-dev": {
-        "nesbot/carbon": "~1.22",
-        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
+        "nesbot/carbon": "^2.0",
+        "phpunit/phpunit": "^7.0",
         "squizlabs/php_codesniffer": "^2.3"
     },
     "autoload": {
