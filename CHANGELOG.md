@@ -7,6 +7,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## UNRELEASED
 
 ### Added
+- PHP 7 goodness: `declare(strict_types=1)` and method return signatures
 - PHP v7.3 tests in `.travis.yml`
 
 ### Changed
