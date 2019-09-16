@@ -351,11 +351,11 @@ class GuzzleRetryMiddleware
      * @param string $headerValue
      * @return float|null  The number of seconds to wait, or NULL if unsuccessful (invalid header)
      */
-    protected function deriveTimeoutFromHeader($headerValue): ?float
+    protected function deriveTimeoutFromHeader(string $headerValue): ?float
     {
         // The timeout will either be a number or a HTTP-formatted date,
         // or seconds (integer)
-        if (trim($headerValue) === (string) $headerValue) {
+        if (trim($headerValue) === (string) (int) $headerValue) {
             return (float) trim($headerValue);
         } elseif ($date = DateTime::createFromFormat(self::DATE_FORMAT, trim($headerValue))) {
             return (float) $date->format('U') - time();
