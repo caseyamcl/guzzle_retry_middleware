@@ -4,7 +4,7 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## UNRELEASED
+## v2.3 (2019-09-16)
 
 ### Added
 - PHP 7 goodness: `declare(strict_types=1)` and method return signatures
