@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Guzzle Retry Middleware Library
  *
@@ -13,6 +14,9 @@
  *
  * ------------------------------------------------------------------
  */
+
+declare(strict_types=1);
+
 namespace GuzzleRetry;
 
 use Carbon\Carbon;
@@ -424,7 +428,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(GuzzleRetryMiddleware::factory([
             'default_retry_multiplier' => function ($num, ResponseInterface $response = null) use (&$programmedDelays) {
-                return $programmedDelays[$num-1];
+                return $programmedDelays[$num - 1];
             },
             'on_retry_callback' => function ($numRetries, $delay) use (&$actualDelays) {
                 $actualDelays[] = $delay;
@@ -661,8 +665,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         // Use a middleware to grab the request and options arguments to store
         // them for validation. This gets executed after GuzzleRetryMiddleware.
         $middleware = function ($handler) use (&$testRequest, &$testOptions) {
-            return function ($request, $options
-            ) use ($handler, &$testRequest, &$testOptions) {
+            return function ($request, $options) use ($handler, &$testRequest, &$testOptions) {
                 $testRequest = $request;
                 $testOptions = $options;
                 return $handler($request, $options);

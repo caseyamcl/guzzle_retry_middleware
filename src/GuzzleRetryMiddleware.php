@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Guzzle Retry Middleware Library
  *
@@ -25,6 +26,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+
 use function call_user_func;
 use function call_user_func_array;
 use function GuzzleHttp\Promise\rejection_for;
@@ -43,10 +45,10 @@ use function is_callable;
 class GuzzleRetryMiddleware
 {
     // HTTP date format
-    const DATE_FORMAT = 'D, d M Y H:i:s T';
+    public const DATE_FORMAT = 'D, d M Y H:i:s T';
 
     // Default retry header (off by default; configurable)
-    const RETRY_HEADER = 'X-Retry-Counter';
+    public const RETRY_HEADER = 'X-Retry-Counter';
 
     /**
      * @var array
@@ -292,7 +294,8 @@ class GuzzleRetryMiddleware
      */
     protected function returnResponse(array $options, ResponseInterface $response): ResponseInterface
     {
-        if ($options['expose_retry_header'] === false
+        if (
+            $options['expose_retry_header'] === false
             || $options['retry_count'] === 0
         ) {
             return $response;
