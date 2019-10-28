@@ -4,6 +4,15 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## v2.3.1 (2019-10-28)
+
+### Added
+- `declare(strict_types=1)` in unit test file
+
+### Changed
+- Fixes to README.md
+- Code tweaks: Upgrade to PSR-12 compliance
+
 ## v2.3 (2019-09-16)
 
 ### Added
