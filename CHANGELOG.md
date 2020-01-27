@@ -4,6 +4,12 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## 2.3.2 (2020-01-27)
+
+### Added
+- PHP 7.4 build test in `.travis.yml` (thanks @alexeyshockov)
+- Guzzle v7 support in `composer.json` (thanks @alexeyshockov)
+
 ## v2.3.1 (2019-10-28)
 
 ### Added
