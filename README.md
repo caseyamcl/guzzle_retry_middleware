@@ -101,15 +101,15 @@ $client = new \GuzzleHttp\Client([
     'connect_timeout' => 10.0,
     
     // Retry options
-   'max_retry_attempts' => 5,
-   'on_retry_callback'  => $notifier
+    'max_retry_attempts' => 5,
+    'on_retry_callback'  => $notifier
 ]);
 
 // When you instantiate the Retry middleware
 $stack = \GuzzleHttp\Stack::create();
 $stack->push(GuzzleRetryMiddleware::factory([
-   'max_retry_attempts' => 5,
-   'on_retry_callback'  => $notifier
+    'max_retry_attempts' => 5,
+    'on_retry_callback'  => $notifier
 ]));
 
 ```
