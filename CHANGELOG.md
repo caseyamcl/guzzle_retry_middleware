@@ -7,6 +7,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## v2.3.3 (2020-05-17)
 
 ### Changed
+- Minimum allowed version of PHPUnit is v7.5
 - Made version constraint syntax consistent in `composer.json`
 - Updated alias for `dev-master` to `2.0-dev` in `composer.json`
 
