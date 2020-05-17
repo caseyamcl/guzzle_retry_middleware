@@ -4,7 +4,12 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## 2.3.2 (2020-01-27)
+## UNRELEASED
+
+### Fixed
+- Cleaned up comments and updated syntax in tests to be compatible with newer versions of PHPUnit (v8 and v9)
+
+## v2.3.2 (2020-01-27)
 
 ### Added
 - PHP 7.4 build test in `.travis.yml` (thanks @alexeyshockov)

@@ -44,7 +44,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Simple instantiation test provides immediate feedback on syntax errors
      */
-    public function testInstantiation()
+    public function testInstantiation(): void
     {
         $handler = new MockHandler();
         $obj = new GuzzleRetryMiddleware($handler);
@@ -57,9 +57,8 @@ class GuzzleRetryMiddlewareTest extends TestCase
      * @dataProvider providerForRetryOccursWhenStatusCodeMatches
      * @param Response $response
      * @param bool $retryShouldOccur
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function testRetryOccursWhenStatusCodeMatches(Response $response, $retryShouldOccur)
+    public function testRetryOccursWhenStatusCodeMatches(Response $response, $retryShouldOccur): void
     {
         $retryOccurred = false;
 
@@ -87,7 +86,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      *
      * @return array
      */
-    public function providerForRetryOccursWhenStatusCodeMatches()
+    public function providerForRetryOccursWhenStatusCodeMatches(): array
     {
         return [
             [new Response(429, [], 'back off'),       true],
@@ -101,9 +100,8 @@ class GuzzleRetryMiddlewareTest extends TestCase
      *
      * @dataProvider retriesFailAfterSpecifiedLimitProvider
      * @param array $responses
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function testRetriesFailAfterSpecifiedLimit(array $responses)
+    public function testRetriesFailAfterSpecifiedLimit(array $responses): void
     {
         $retryCount = 0;
 
@@ -135,7 +133,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      *
      * @return array
      */
-    public function retriesFailAfterSpecifiedLimitProvider()
+    public function retriesFailAfterSpecifiedLimitProvider(): array
     {
         $http429Response = new Response(429, [], 'Wait');
         $connectException = new ConnectException(
@@ -154,7 +152,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that setting options in the Guzzle client constructor works
      */
-    public function testDefaultOptionsCanBeSetInGuzzleClientConstructor()
+    public function testDefaultOptionsCanBeSetInGuzzleClientConstructor(): void
     {
         $numRetries = 0;
 
@@ -187,7 +185,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that the X header is injected when requested
      */
-    public function testHeaderIsInjectedWhenRequested()
+    public function testHeaderIsInjectedWhenRequested(): void
     {
         // Build 2 responses with 429 headers and one good one
         $responses = [
@@ -205,7 +203,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
             // set some defaults in Guzzle..
             'default_retry_multiplier' => 0,
             'max_retry_attempts'       => 2,
-            'expose_retry_header'            => true
+            'expose_retry_header'      => true
         ]);
 
         $response = $client->request('GET', '/');
@@ -217,7 +215,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that the X header is not injected when no retries occurred
      */
-    public function testHeaderIsNotInjectedWhenNoRetriesOccurred()
+    public function testHeaderIsNotInjectedWhenNoRetriesOccurred(): void
     {
         $responses = [
             new Response(200, [], 'Good')
@@ -243,7 +241,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that setting options per request overrides other options correctly
      */
-    public function testOptionsCanBeSetInRequest()
+    public function testOptionsCanBeSetInRequest(): void
     {
         $numRetries = 0;
 
@@ -277,7 +275,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test delay is set correctly when server provides `Retry-After` header in date form
      */
-    public function testDelayDerivedFromDateIfServerProvidesValidRetryAfterDateHeader()
+    public function testDelayDerivedFromDateIfServerProvidesValidRetryAfterDateHeader(): void
     {
         $calculatedDelay = null;
 
@@ -306,7 +304,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test delay is set correctly when server provides `Retry-After` header in integer form
      */
-    public function testDelayDerivedFromSecondsIfServerProvidesValidRetryAfterSecsHeader()
+    public function testDelayDerivedFromSecondsIfServerProvidesValidRetryAfterSecsHeader(): void
     {
         $calculatedDelay = null;
 
@@ -331,7 +329,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test default delay is used if server provides a malformed `Retry-After` header
      */
-    public function testDefaultDelayOccursIfServerProvidesInvalidRetryAfterHeader()
+    public function testDefaultDelayOccursIfServerProvidesInvalidRetryAfterHeader(): void
     {
         $calculatedDelay = null;
 
@@ -357,7 +355,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that retry does not occur if no `Retry-After` header and option is set
      */
-    public function testDelayDoesNotOccurIfNoRetryAfterHeaderAndOptionSetToIgnore()
+    public function testDelayDoesNotOccurIfNoRetryAfterHeaderAndOptionSetToIgnore(): void
     {
         $retryOccurred = false;
 
@@ -388,7 +386,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that the retry multiplier works as predicted
      */
-    public function testRetryMultiplierWorksAsExpected()
+    public function testRetryMultiplierWorksAsExpected(): void
     {
         $delayTimes = [];
 
@@ -413,7 +411,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
-    public function testRetryMultiplierWorksAsCallback()
+    public function testRetryMultiplierWorksAsCallback(): void
     {
         $programmedDelays = [0.5, 0.1, 0.3];
         $actualDelays     = [];
@@ -427,7 +425,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(GuzzleRetryMiddleware::factory([
-            'default_retry_multiplier' => function ($num, ResponseInterface $response = null) use (&$programmedDelays) {
+            'default_retry_multiplier' => function ($num) use (&$programmedDelays) {
                 return $programmedDelays[$num - 1];
             },
             'on_retry_callback' => function ($numRetries, $delay) use (&$actualDelays) {
@@ -443,7 +441,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that BadResponseException and child classes are caught and handled
      */
-    public function testBadResponseExceptionIsHandled()
+    public function testBadResponseExceptionIsHandled(): void
     {
         $numberOfRetries = 0;
         $request = new Request('GET', '/');
@@ -469,11 +467,10 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     /**
      * Test that other exceptions (non-BadResponseException) are not caught or handled
-     *
-     * @expectedException \GuzzleHttp\Exception\TransferException
      */
-    public function testNonBadResponseExceptionIsNotHandled()
+    public function testNonBadResponseExceptionIsNotHandled(): void
     {
+        $this->expectException(TransferException::class);
         $responses = [new TransferException('Something terrible happened')];
 
         $stack = HandlerStack::create(new MockHandler($responses));
@@ -484,11 +481,9 @@ class GuzzleRetryMiddlewareTest extends TestCase
     }
 
     /**
-     * Test edge-case where negative multplier calculated or used
-     *
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * Test edge-case where negative multiplier calculated or used
      */
-    public function testNegativeMultiplierActuallyWorks()
+    public function testNegativeMultiplierActuallyWorks(): void
     {
         $delayTimes = [];
 
@@ -513,7 +508,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
-    public function testConnectTimeoutIsHandledWhenOptionIsSetToTrue()
+    public function testConnectTimeoutIsHandledWhenOptionIsSetToTrue(): void
     {
         // Send a connect timeout (cURL error 28) then a good response
         $responses = [
@@ -537,7 +532,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function testConnectTimeoutIsNotHandledWhenOptionIsSetToFalse()
+    public function testConnectTimeoutIsNotHandledWhenOptionIsSetToFalse(): void
     {
         // Send a connect timeout (cURL error 28) then a good response
         $responses = [
@@ -570,13 +565,13 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Ensure retry callback accepts expected arguments
      */
-    public function testRetryCallbackReceivesExpectedArguments()
+    public function testRetryCallbackReceivesExpectedArguments(): void
     {
         $callback = function ($retryCount, $delayTimeout, $request, $options, $response) {
-            $this->assertInternalType('int', $retryCount);
-            $this->assertInternalType('float', $delayTimeout);
+            $this->assertIsInt($retryCount);
+            $this->assertIsFloat($delayTimeout);
             $this->assertInstanceOf(RequestInterface::class, $request);
-            $this->assertInternalType('array', $options);
+            $this->assertIsArray($options);
             $this->assertInstanceOf(ResponseInterface::class, $response);
         };
 
@@ -597,11 +592,11 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     /**
      * The only use-case that exists for connect exceptions is timeouts
-     *
-     * @expectedException \GuzzleHttp\Exception\ConnectException
      */
-    public function testNonTimeoutConnectExceptionIsNotRetried()
+    public function testNonTimeoutConnectExceptionIsNotRetried(): void
     {
+        $this->expectException(ConnectException::class);
+
         // Send a connect timeout (cURL error 28) then a good response
         $responses = [
             new ConnectException('Non-timeout issue', new Request('get', '/')),
@@ -618,7 +613,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that setting `retry_enabled` to FALSE on an individual request actually disables retries
      */
-    public function testRetryEnableSettingOverridesDefaultConfigurationPerRequest()
+    public function testRetryEnableSettingOverridesDefaultConfigurationPerRequest(): void
     {
         $responses = [
             new Response(429, [], 'Wait'), // Queue for request with retry enabled
@@ -651,7 +646,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that modifying request and options inside the retry callback works
      */
-    public function testRetryCallbackReferenceModification()
+    public function testRetryCallbackReferenceModification(): void
     {
         // Build one response with 429 headers and one good one
         $responses = [
