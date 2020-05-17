@@ -4,7 +4,11 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## UNRELEASED
+## v2.3.3 (2020-05-17)
+
+### Changed
+- Made version constraint syntax consistent in `composer.json`
+- Updated alias for `dev-master` to `2.0-dev` in `composer.json`
 
 ### Fixed
 - Cleaned up comments and updated syntax in tests to be compatible with newer versions of PHPUnit (v8 and v9)
