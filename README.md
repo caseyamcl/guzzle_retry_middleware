@@ -7,7 +7,7 @@
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
 
-This is a [Guzzle v6](http://guzzlephp.org) middleware library that implements automatic
+This is a [Guzzle v6+](http://guzzlephp.org) middleware library that implements automatic
 retry of requests when HTTP servers respond with `503` or `429` status codes.  It can also
 be configured to retry requests that timeout.
  
@@ -76,7 +76,7 @@ The following options are available:
 | `on_retry_callback`                | callable          | null            | Optional callback to call when a retry occurs
 | `retry_on_timeout`                 | boolean           | false           | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
 | `expose_retry_header`              | boolean           | false           | Set to TRUE if you wish to expose the number of retries as a header on the response object
-| `retry_header`                     | string            | X-Retry-Counter | The header key to use
+| `retry_header`                     | string            | X-Retry-Counter | The header key to use for the retry counter (if you need it)
 
 Each option is discussed in detail below.
 
