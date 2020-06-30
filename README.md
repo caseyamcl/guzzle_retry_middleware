@@ -227,7 +227,7 @@ You can configure this middleware to retry requests that timeout.  Simply set th
 
 # Retry this request if it times out:
 $response = $client->get('/some-path', [
-    'retry_on_timeout' => true    // Set the retry middleware to retry when the connection or response times out
+    'retry_on_timeout' => true,    // Set the retry middleware to retry when the connection or response times out
     'connect_timeout'  => 20,     // This is a built-in Guzzle option
     'timeout'          => 50      // This is also a built-in Guzzle option
 ]);
@@ -264,7 +264,7 @@ use Psr\Http\Message\ResponseInterface;
 $listener = function($attemptNumber, $delay, &$request, &$options, $response) {
     
     echo sprintf(
-        "Retrying request to %s.  Server responded with %s.  Will wait %s seconds.  This is attempt #%s,
+        "Retrying request to %s.  Server responded with %s.  Will wait %s seconds.  This is attempt #%s",
         $request->getUri()->getPath(),
         $response->getStatusCode(),
         number_format($delay, 2),
