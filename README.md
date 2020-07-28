@@ -77,6 +77,7 @@ The following options are available:
 | `retry_on_timeout`                 | boolean           | false           | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
 | `expose_retry_header`              | boolean           | false           | Set to TRUE if you wish to expose the number of retries as a header on the response object
 | `retry_header`                     | string            | X-Retry-Counter | The header key to use for the retry counter (if you need it)
+| `retry_after_header`               | string            | Retry-After     | The header key to use for the retry after header.
 
 Each option is discussed in detail below.
 
@@ -332,6 +333,18 @@ $response = $client->get('/some-path', [
 
 # If a request was retried, the response will include the 'X-Retry-Counter'
 $numRetries = (int) $response->getHeaderLine('X-Retry-Count');
+```
+
+### Modifying the default retry after header
+
+```php
+# Change the name of the expected retry after header to something else:
+$response = $client->get('/some-path', [
+    'retry_after_header' => 'X-Custom-Retry-After-Seconds'
+]);
+
+# Otherwise, the default `Retry-After` header will be used.
+$response = $client->get('/some-path');
 ```
 
 ## Change log
