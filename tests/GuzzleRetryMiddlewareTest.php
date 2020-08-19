@@ -411,6 +411,33 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
+    /**
+     * Test that the retry after header override retrieves proper custom header
+     */
+    public function testRetryAfterHeaderWorksAsExpected(): void
+    {
+        $delayTimes = [];
+
+        $responses = [
+            new Response(429, [ 'X-Custom-Retry-After' => '2' ], 'Wait'),
+            new Response(429, [ 'X-Custom-Retry-After' => '1' ], 'Wait'),
+            new Response(200, [], 'Good'),
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'retry_after_header' => 'X-Custom-Retry-After',
+            'on_retry_callback' => function ($numRetries, $delay) use (&$delayTimes) {
+                $delayTimes[] = $delay;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+
+        $this->assertEquals([2, 1], $delayTimes);
+    }
+
     public function testRetryMultiplierWorksAsCallback(): void
     {
         $programmedDelays = [0.5, 0.1, 0.3];

@@ -50,6 +50,9 @@ class GuzzleRetryMiddleware
     // Default retry header (off by default; configurable)
     public const RETRY_HEADER = 'X-Retry-Counter';
 
+    // Default retry-after header
+    public const RETRY_AFTER_HEADER = 'Retry-After';
+
     /**
      * @var array
      */
@@ -81,7 +84,10 @@ class GuzzleRetryMiddleware
         'expose_retry_header'              => false,
 
         // The header key
-        'retry_header'                     => self::RETRY_HEADER
+        'retry_header'                     => self::RETRY_HEADER,
+
+        // The retry after header key
+        'retry_after_header'               => self::RETRY_AFTER_HEADER,
     ];
 
     /**
@@ -307,7 +313,7 @@ class GuzzleRetryMiddleware
     /**
      * Determine the delay timeout
      *
-     * Attempts to read and interpret the HTTP `Retry-After` header, or defaults
+     * Attempts to read and interpret the configured retry after header, or defaults
      * to a built-in incremental back-off algorithm.
      *
      * @param ResponseInterface $response
@@ -328,9 +334,9 @@ class GuzzleRetryMiddleware
 
         // Retry-After can be a delay in seconds or a date
         // (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After)
-        if ($response && $response->hasHeader('Retry-After')) {
+        if ($response && $response->hasHeader($options['retry_after_header'])) {
             return
-                $this->deriveTimeoutFromHeader($response->getHeader('Retry-After')[0])
+                $this->deriveTimeoutFromHeader($response->getHeader($options['retry_after_header'])[0])
                 ?: $defaultDelayTimeout;
         }
 
@@ -338,7 +344,7 @@ class GuzzleRetryMiddleware
     }
 
     /**
-     * Attempt to derive the timeout from the HTTP `Retry-After` header
+     * Attempt to derive the timeout from the provided retry after header value
      *
      * The spec allows the header value to either be a number of seconds or a datetime.
      *
