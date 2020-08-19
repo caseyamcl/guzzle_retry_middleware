@@ -4,6 +4,17 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## v2.4 (2020-08-19)
+### Added
+- Option to specify custom HTTP header name other than `Retry-After` (thanks @jamesaspence)
+
+### Changed
+- Added a few things to `.gitignore` (minor)
+- Updated `phpunit.xml.dist` to latest spec
+
+### Removed
+- Removed build tests for PHP 7.1 in `.travis.yml`
+
 ## v2.3.3 (2020-05-17)
 
 ### Changed
