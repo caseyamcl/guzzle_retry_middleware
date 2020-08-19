@@ -414,7 +414,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Test that the retry after header override retrieves proper custom header
      */
-    public function testRetryAfterHeaderWorksAsExpected(): void
+    public function testCustomRetryAfterHeaderWorksAsExpected(): void
     {
         $delayTimes = [];
 

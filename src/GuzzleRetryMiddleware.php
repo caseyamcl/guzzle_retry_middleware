@@ -344,7 +344,7 @@ class GuzzleRetryMiddleware
     }
 
     /**
-     * Attempt to derive the timeout from the provided retry after header value
+     * Attempt to derive the timeout from the `Retry-After` (or custom) header value
      *
      * The spec allows the header value to either be a number of seconds or a datetime.
      *
