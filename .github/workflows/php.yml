@@ -1,4 +1,4 @@
-name: PHP Composer
+name: Github Build
 on: [push, pull_request]
 jobs:
   build:
