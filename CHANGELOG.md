@@ -8,6 +8,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Added
 - Ability to handle non-integer values in `Retry-After` headers (thanks @andrewdalpino)
 - Beginning GitHub Workflows code (support for Travis-CI will be removed in the next minor version)
+- Support for PHP v8.0 in `composer.json`
 
 ## v2.4 (2020-08-19)
 ### Added
