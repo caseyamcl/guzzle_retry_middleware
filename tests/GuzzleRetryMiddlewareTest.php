@@ -716,7 +716,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals('GoodOption', $testOptions['TestOption']);
     }
 
-    public function testNonIntegerRetryAfterHeader()
+    public function testNonIntegerRetryAfterHeader(): void
     {
         $calculatedDelay = null;
 
