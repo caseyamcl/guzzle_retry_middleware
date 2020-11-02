@@ -287,7 +287,7 @@ class GuzzleRetryMiddleware
         }
 
         // Delay!
-        usleep(((int) $delayTimeout) * 1000000);
+        usleep((int) ($delayTimeout * 1e6));
 
         // Return
         return $this($request, $options);
