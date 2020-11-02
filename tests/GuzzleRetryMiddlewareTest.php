@@ -715,4 +715,26 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertArrayHasKey('TestOption', $testOptions);
         $this->assertEquals('GoodOption', $testOptions['TestOption']);
     }
+
+    public function testNonIntegerRetryAfterHeader()
+    {
+        $calculatedDelay = null;
+
+        $responses = [
+            new Response(429, ['Retry-After' => 3.2], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'on_retry_callback' => function ($numRetries, $delay) use (&$calculatedDelay) {
+                $calculatedDelay = $delay;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+
+        $this->assertEquals(3.2, $calculatedDelay);
+    }
 }
