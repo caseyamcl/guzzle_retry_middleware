@@ -2,7 +2,7 @@
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
-[![Github Build](https://github.com/caseyamcl/guzzle_retry_middleware/workflows/Github%20Build/badge.svg)
+![Github Build](https://github.com/caseyamcl/guzzle_retry_middleware/workflows/Github%20Build/badge.svg)
 [![Coverage Status][ico-scrutinizer]][link-scrutinizer]
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
