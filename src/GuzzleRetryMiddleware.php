@@ -287,7 +287,7 @@ class GuzzleRetryMiddleware
         }
 
         // Delay!
-        usleep(((int) $delayTimeout) * 1000000);
+        usleep((int) ($delayTimeout * 1e6));
 
         // Return
         return $this($request, $options);
@@ -355,7 +355,7 @@ class GuzzleRetryMiddleware
     {
         // The timeout will either be a number or a HTTP-formatted date,
         // or seconds (integer)
-        if (trim($headerValue) === (string) (int) $headerValue) {
+        if (is_numeric($headerValue)) {
             return (float) trim($headerValue);
         } elseif ($date = DateTime::createFromFormat(self::DATE_FORMAT, trim($headerValue))) {
             return (float) $date->format('U') - time();
