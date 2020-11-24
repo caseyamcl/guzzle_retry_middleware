@@ -323,11 +323,11 @@ class GuzzleRetryMiddleware
      * Attempts to read and interpret the configured retry after header, or defaults
      * to a built-in incremental back-off algorithm.
      *
-     * @param ResponseInterface $response
      * @param array $options
+     * @param ResponseInterface|null $response
      * @return float  Delay timeout, in seconds
      */
-    protected function determineDelayTimeout(array $options, ResponseInterface $response = null): float
+    protected function determineDelayTimeout(array $options, ?ResponseInterface $response = null): float
     {
         if (is_callable($options['default_retry_multiplier'])) {
             $defaultDelayTimeout = (float) call_user_func(
@@ -351,7 +351,7 @@ class GuzzleRetryMiddleware
         }
 
         // If the max_allowable_timeout_secs is set
-        if ((float) abs($options['max_allowable_timeout_secs']) > 0) {
+        if (! is_null($options['max_allowable_timeout_secs']) && abs($options['max_allowable_timeout_secs']) > 0) {
             return min(abs($timeout), (float) abs($options['max_allowable_timeout_secs']));
         } else {
             return abs($timeout);
