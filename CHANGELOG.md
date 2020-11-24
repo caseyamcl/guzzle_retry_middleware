@@ -4,7 +4,7 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## UNRELEASED
+## v2.6 (2020-11-24)
 ### Added
 - GitHub Actions build status badge in `README.md`
 - Support for custom date formats in `Retry-After` header via new `retry_after_date_format` option
