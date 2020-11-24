@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace GuzzleRetry;
 
 use Carbon\Carbon;
+use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
@@ -736,5 +737,51 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $client->request('GET', '/');
 
         $this->assertEquals(3.2, $calculatedDelay);
+    }
+
+    public function testCustomDateFormatInRetryAfterHeader(): void
+    {
+        $calculatedDelay = null;
+
+        $responses = [
+            new Response(429, ['Retry-After' => Carbon::now()->addSeconds(2)->format(DateTime::ISO8601)], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'retry_after_date_format' => DateTime::ISO8601,
+            'on_retry_callback' => function ($numRetries, $delay) use (&$calculatedDelay) {
+                $calculatedDelay = $delay;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+        $this->assertSame((double) 2, $calculatedDelay);
+    }
+
+    public function testMaxAllowableTimeoutSecs(): void
+    {
+        $calculatedDelays = [];
+
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'max_allowable_timeout_secs' => 2,
+            'on_retry_callback' => function ($numRetries, $delay) use (&$calculatedDelays) {
+                $calculatedDelays[$numRetries] = $delay;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+        $this->assertSame([1 => 1.5, 2 => 2.0, 3 => 2.0], $calculatedDelays);
     }
 }

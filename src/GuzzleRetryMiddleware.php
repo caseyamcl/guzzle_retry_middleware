@@ -68,13 +68,16 @@ class GuzzleRetryMiddleware
         // Set a maximum number of attempts per request
         'max_retry_attempts'               => 10,
 
+        // Maximum allowable timeout seconds
+        'max_allowable_timeout_secs'       => null,
+
         // Set this to TRUE to retry only if the HTTP Retry-After header is specified
         'retry_only_if_retry_after_header' => false,
 
         // Only retry when status is equal to these response codes
         'retry_on_status'                  => ['429', '503'],
 
-        // Callback to trigger when delay occurs (accepts count, delay, request, response, options)
+        // Callback to trigger before delay occurs (accepts count, delay, request, response, options)
         'on_retry_callback'                => null,
 
         // Retry on connect timeout?
@@ -88,6 +91,9 @@ class GuzzleRetryMiddleware
 
         // The retry after header key
         'retry_after_header'               => self::RETRY_AFTER_HEADER,
+
+        // Date format
+        'retry_after_date_format'          => self::DATE_FORMAT
     ];
 
     /**
@@ -138,7 +144,6 @@ class GuzzleRetryMiddleware
             $options['retry_count'] = 0;
         }
 
-        /** @var callable $next */
         $next = $this->nextHandler;
         return $next($request, $options)
             ->then(
@@ -193,7 +198,12 @@ class GuzzleRetryMiddleware
             }
 
             // If made it here, then we have decided not to retry the request
-            return rejection_for($reason);
+            // Future-proofing this; remove when bumping minimum Guzzle version to 7.0
+            if (class_exists('\GuzzleHttp\Promise\Create')) {
+                return \GuzzleHttp\Promise\Create::rejectionFor($reason);
+            } else {
+                return rejection_for($reason);
+            }
         };
     }
 
@@ -300,10 +310,7 @@ class GuzzleRetryMiddleware
      */
     protected function returnResponse(array $options, ResponseInterface $response): ResponseInterface
     {
-        if (
-            $options['expose_retry_header'] === false
-            || $options['retry_count'] === 0
-        ) {
+        if ($options['expose_retry_header'] === false || $options['retry_count'] === 0) {
             return $response;
         }
 
@@ -335,12 +342,20 @@ class GuzzleRetryMiddleware
         // Retry-After can be a delay in seconds or a date
         // (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After)
         if ($response && $response->hasHeader($options['retry_after_header'])) {
-            return
-                $this->deriveTimeoutFromHeader($response->getHeader($options['retry_after_header'])[0])
-                ?: $defaultDelayTimeout;
+            $timeout = $this->deriveTimeoutFromHeader(
+                $response->getHeader($options['retry_after_header'])[0],
+                $options['retry_after_date_format']
+            ) ?: $defaultDelayTimeout;
+        } else {
+            $timeout = abs($defaultDelayTimeout);
         }
 
-        return abs($defaultDelayTimeout);
+        // If the max_allowable_timeout_secs is set
+        if ((float) abs($options['max_allowable_timeout_secs']) > 0) {
+            return min(abs($timeout), (float) abs($options['max_allowable_timeout_secs']));
+        } else {
+            return abs($timeout);
+        }
     }
 
     /**
@@ -349,15 +364,16 @@ class GuzzleRetryMiddleware
      * The spec allows the header value to either be a number of seconds or a datetime.
      *
      * @param string $headerValue
+     * @param string|null $dateFormat
      * @return float|null  The number of seconds to wait, or NULL if unsuccessful (invalid header)
      */
-    protected function deriveTimeoutFromHeader(string $headerValue): ?float
+    protected function deriveTimeoutFromHeader(string $headerValue, ?string $dateFormat = self::DATE_FORMAT): ?float
     {
         // The timeout will either be a number or a HTTP-formatted date,
         // or seconds (integer)
         if (is_numeric($headerValue)) {
             return (float) trim($headerValue);
-        } elseif ($date = DateTime::createFromFormat(self::DATE_FORMAT, trim($headerValue))) {
+        } elseif ($date = DateTime::createFromFormat($dateFormat, trim($headerValue))) {
             return (float) $date->format('U') - time();
         }
 
