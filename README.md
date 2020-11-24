@@ -2,7 +2,7 @@
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
-![Github Build](https://github.com/caseyamcl/guzzle_retry_middleware/workflows/Github%20Build/badge.svg)
+[![Github Build][ico-ghbuild]][link-ghbuild]
 [![Coverage Status][ico-scrutinizer]][link-scrutinizer]
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
@@ -66,18 +66,20 @@ until giving up after 10 attempts.
 
 The following options are available:
 
-| Option                             | Type              | Default         | Summary |
-| ---------------------------------- | ----------------- | --------------- | ------- |
-| `retry_enabled`                    | boolean           | true            | Is retry enabled (useful for disabling for individual requests)
-| `max_retry_attempts`               | integer           | 10              | Maximum number of retries per request
-| `retry_only_if_retry_after_header` | boolean           | false           | Retry only if `RetryAfter` header sent
-| `retry_on_status`                  | array<int>        | 503, 429        | The response status codes that will trigger a retry
-| `default_retry_multiplier`         | float or callable | 1.5             | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details)
-| `on_retry_callback`                | callable          | null            | Optional callback to call when a retry occurs
-| `retry_on_timeout`                 | boolean           | false           | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
-| `expose_retry_header`              | boolean           | false           | Set to TRUE if you wish to expose the number of retries as a header on the response object
-| `retry_header`                     | string            | X-Retry-Counter | The header key to use for the retry counter (if you need it)
-| `retry_after_header`               | string            | Retry-After     | The header key to use for the retry after header.
+| Option                             | Type              | Default            | Summary |
+| ---------------------------------- | ----------------- | ------------------ | ------- |
+| `retry_enabled`                    | boolean           | true               | Is retry enabled (useful for disabling for individual requests)
+| `max_retry_attempts`               | integer           | 10                 | Maximum number of retries per request
+| `max_allowable_timeout_secs`       | integer           | null               | If set, specifies a hard ceiling in seconds that the client can wait between requests 
+| `retry_only_if_retry_after_header` | boolean           | false              | Retry only if `RetryAfter` header sent
+| `retry_on_status`                  | array<int>        | 503, 429           | The response status codes that will trigger a retry
+| `default_retry_multiplier`         | float or callable | 1.5                | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details)
+| `on_retry_callback`                | callable          | null               | Optional callback to call when a retry occurs
+| `retry_on_timeout`                 | boolean           | false              | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
+| `expose_retry_header`              | boolean           | false              | Set to TRUE if you wish to expose the number of retries as a header on the response object
+| `retry_header`                     | string            | X-Retry-Counter    | The header key to use for the retry counter (if you need it)
+| `retry_after_header`               | string            | Retry-After        | The header key to use for the retry after header.
+| `retry_after_date_format`          | string            | `D, d M Y H:i:s T` | Optional customization for servers that return date/times that violate the HTTP spec
 
 Each option is discussed in detail below.
 
@@ -307,7 +309,7 @@ Sometimes for debugging purposes, it is useful to know how many times a request 
 For this purpose, this library can add a custom header to responses; simply set the `expose_retry_header` option 
 to `TRUE`.  
 
-NOTE: This modifies the HTTP response on the client.  If you don't want to alter the response retrieved from the
+*Note*: This modifies the HTTP response on the client.  If you don't want to alter the response retrieved from the
 server, you can also use [callbacks](#on-retry-callback) to get the request count.
 
 Example:
@@ -335,7 +337,11 @@ $response = $client->get('/some-path', [
 $numRetries = (int) $response->getHeaderLine('X-Retry-Count');
 ```
 
-### Modifying the default retry after header
+### Modifying the expected header name from `Retry-After`
+
+You can change the header that the client expects the server to respond with. By default,
+the client looks for the `Retry-After` header, but in some edge-cases, servers may choose
+to respond with a different header.
 
 ```php
 # Change the name of the expected retry after header to something else:
@@ -345,6 +351,46 @@ $response = $client->get('/some-path', [
 
 # Otherwise, the default `Retry-After` header will be used.
 $response = $client->get('/some-path');
+```
+
+### Setting a custom date format for the `Retry-After` header
+
+You can change the expected date format expected from the server that the client
+library expects. By default, this library expects an RFC 2822 header as defined in the 
+[HTTP spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date). In certain
+edge-cases, the server may implement some other date format. This library allows for the
+possibility of that.
+
+```php
+# Change the expected date format of the `Retry-After` header
+$response = $client->get('/some-path', [
+    'retry_after_date_format' => 'Y-m-d H:i:s'
+]);
+
+# Otherwise, the default date format for the `Retry-After` header will be used.
+# (ex. 'Wed, 24 Nov 2020 07:28:00 GMT')
+$response = $client->get('/some-path');
+```
+
+*Note*: Be careful not to use this option with the Unix epoch (`u`) format.  The
+client will interpret this value as an integer and subsequently timeout  
+for a very, very long time.
+
+### Setting a maximum allowable timeout value
+
+If you want the client to not accept timeout values greater than a certain
+value, set the `max_allowable_timeout_secs` option. This will return a static
+number once the timeout reaches a specified length regardless if it is calculated
+using the default backoff algorithm or returned from the server via the `Retry-After` header.
+
+By default, this value is `null`, which means there is no limit.
+
+```php
+# Set the maximum allowable timeout
+# If the calculated value exceeds 120 seconds, then just return 120 seconds
+$response = $client->get('/some-path', [
+    'max_allowable_timeout_secs' => 120
+]);
 ```
 
 ## Change log
@@ -381,13 +427,13 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 [ico-version]: https://img.shields.io/packagist/v/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/caseyamcl/guzzle_retry_middleware/master.svg?style=flat-square
+[ico-ghbuild]: https://github.com/caseyamcl/guzzle_retry_middleware/workflows/Github%20Build/badge.svg
 [ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
 [ico-code-quality]: https://img.shields.io/scrutinizer/g/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/caseyamcl/guzzle_retry_middleware
-[link-travis]: https://travis-ci.org/caseyamcl/guzzle_retry_middleware
+[link-ghbuild]: https://github.com/caseyamcl/guzzle_retry_middleware/actions?query=workflow%3A%22Github+Build%22
 [link-scrutinizer]: https://scrutinizer-ci.com/g/caseyamcl/guzzle_retry_middleware/code-structure
 [link-code-quality]: https://scrutinizer-ci.com/g/caseyamcl/guzzle_retry_middleware
 [link-downloads]: https://packagist.org/packages/caseyamcl/guzzle_retry_middleware

@@ -5,7 +5,14 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
 ## UNRELEASED
+### Added
+- GitHub Actions build status badge in `README.md`
+- Support for custom date formats in `Retry-After` header via new `retry_after_date_format` option
+- `max_allowable_timeout_secs` option to set a ceiling on the maximum time the client is willing to wait between requests
+- Support for Guzzle 7 class-based static methods
+
 ### Changed
+- Removed unnecessary comments
 - Name of Github Action to `Github Build`
 
 ### Removed
