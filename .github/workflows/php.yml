@@ -29,6 +29,10 @@ jobs:
           restore-keys: ${{ matrix.php }}-composer-
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Run PHPStan
+        run: composer phpstan
+      - name: Run PHP-CS
+        run: composer check-style
       - name: Run test suite
         run: vendor/bin/phpunit
 
