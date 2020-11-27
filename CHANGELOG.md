@@ -4,6 +4,16 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## UNRELEASED
+### Added
+- PHPStan in dev dependencies
+
+### Fixed
+- Made `GuzzleRetryMiddleware::__construct` method final
+- `$options` parameter comments PHPStan was complaining about
+- `shouldRetryHttpResponse` values assume that the `$response` parameter is not null
+- Ensure date `$dateFormat` is never NULL or empty string in `deriveTimeoutFromHeader`
+
 ## v2.6 (2020-11-24)
 ### Added
 - GitHub Actions build status badge in `README.md`

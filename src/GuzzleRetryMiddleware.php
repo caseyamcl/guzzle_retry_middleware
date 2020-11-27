@@ -54,7 +54,7 @@ class GuzzleRetryMiddleware
     public const RETRY_AFTER_HEADER = 'Retry-After';
 
     /**
-     * @var array
+     * @var array<mixed>
      */
     private $defaultOptions = [
 
@@ -107,7 +107,7 @@ class GuzzleRetryMiddleware
      * Example:
      * <code>$handlerStack->push(GuzzleRetryMiddleware::factory());</code>
      *
-     * @param array $defaultOptions
+     * @param array<mixed> $defaultOptions
      * @return Closure
      */
     public static function factory(array $defaultOptions = []): Closure
@@ -121,9 +121,9 @@ class GuzzleRetryMiddleware
      * GuzzleRetryMiddleware constructor.
      *
      * @param callable $nextHandler
-     * @param array $defaultOptions
+     * @param array<mixed> $defaultOptions
      */
-    public function __construct(callable $nextHandler, array $defaultOptions = [])
+    final public function __construct(callable $nextHandler, array $defaultOptions = [])
     {
         $this->nextHandler = $nextHandler;
         $this->defaultOptions = array_replace($this->defaultOptions, $defaultOptions);
@@ -131,7 +131,7 @@ class GuzzleRetryMiddleware
 
     /**
      * @param RequestInterface $request
-     * @param array $options
+     * @param array<mixed> $options
      * @return Promise
      */
     public function __invoke(RequestInterface $request, array $options): Promise
@@ -159,7 +159,7 @@ class GuzzleRetryMiddleware
      * be unsuccessful (e.g. 429 or 503), so check to see if it should be retried
      *
      * @param RequestInterface $request
-     * @param array $options
+     * @param array<mixed> $options
      * @return callable
      */
     protected function onFulfilled(RequestInterface $request, array $options): callable
@@ -178,7 +178,7 @@ class GuzzleRetryMiddleware
      * the request can be retried.  Otherwise, pass it on.
      *
      * @param RequestInterface $request
-     * @param array $options
+     * @param array<mixed> $options
      * @return callable
      */
     protected function onRejected(RequestInterface $request, array $options): callable
@@ -210,7 +210,7 @@ class GuzzleRetryMiddleware
     /**
      * Decide whether or not to retry on connect exception
      *
-     * @param array $options
+     * @param array<mixed> $options
      * @return bool
      */
     protected function shouldRetryConnectException(array $options): bool
@@ -228,29 +228,32 @@ class GuzzleRetryMiddleware
      * 1. The response status code against the status codes that should be retried
      * 2. The number of attempts made thus far for this request
      *
-     * @param array $options
+     * @param array<mixed> $options
      * @param ResponseInterface|null $response
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
-    protected function shouldRetryHttpResponse(array $options, ResponseInterface $response): bool
+    protected function shouldRetryHttpResponse(array $options, ?ResponseInterface $response = null): bool
     {
         $statuses = array_map('\intval', (array) $options['retry_on_status']);
+        $hasRetryAfterHeader = $response ? $response->hasHeader('Retry-After') : false;
 
         switch (true) {
             case $options['retry_enabled'] === false:
             case $this->countRemainingRetries($options) === 0: // No Retry-After header, and it is required?  Give up
-            case (! $response->hasHeader('Retry-After') && $options['retry_only_if_retry_after_header']):
+            case (! $hasRetryAfterHeader && $options['retry_only_if_retry_after_header']):
                 return false;
 
             // Conditions met; see if status code matches one that can be retried
             default:
-                return in_array($response->getStatusCode(), $statuses, true);
+                $statusCode = $response ? $response->getStatusCode() : 0;
+                return in_array($statusCode, $statuses, true);
         }
     }
 
     /**
      * Count the number of retries remaining.  Always returns 0 or greater.
-     * @param array $options
+     *
+     * @param array<mixed> $options
      * @return int
      */
     protected function countRemainingRetries(array $options): int
@@ -261,7 +264,7 @@ class GuzzleRetryMiddleware
             ? (int) $options['max_retry_attempts']
             : $this->defaultOptions['max_retry_attempts'];
 
-        return max([$numAllowed - $retryCount, 0]);
+        return (int) max([$numAllowed - $retryCount, 0]);
     }
 
     /**
@@ -270,7 +273,7 @@ class GuzzleRetryMiddleware
      * Increments the retry count, determines the delay (timeout), executes callbacks, sleeps, and re-send the request
      *
      * @param RequestInterface $request
-     * @param array $options
+     * @param array<mixed> $options
      * @param ResponseInterface|null $response
      * @return Promise
      */
@@ -304,7 +307,7 @@ class GuzzleRetryMiddleware
     }
 
     /**
-     * @param array $options
+     * @param array<mixed> $options
      * @param ResponseInterface $response
      * @return ResponseInterface
      */
@@ -323,7 +326,7 @@ class GuzzleRetryMiddleware
      * Attempts to read and interpret the configured retry after header, or defaults
      * to a built-in incremental back-off algorithm.
      *
-     * @param array $options
+     * @param array<mixed> $options
      * @param ResponseInterface|null $response
      * @return float  Delay timeout, in seconds
      */
@@ -364,16 +367,16 @@ class GuzzleRetryMiddleware
      * The spec allows the header value to either be a number of seconds or a datetime.
      *
      * @param string $headerValue
-     * @param string|null $dateFormat
+     * @param string $dateFormat
      * @return float|null  The number of seconds to wait, or NULL if unsuccessful (invalid header)
      */
-    protected function deriveTimeoutFromHeader(string $headerValue, ?string $dateFormat = self::DATE_FORMAT): ?float
+    protected function deriveTimeoutFromHeader(string $headerValue, string $dateFormat = self::DATE_FORMAT): ?float
     {
         // The timeout will either be a number or a HTTP-formatted date,
         // or seconds (integer)
         if (is_numeric($headerValue)) {
             return (float) trim($headerValue);
-        } elseif ($date = DateTime::createFromFormat($dateFormat, trim($headerValue))) {
+        } elseif ($date = DateTime::createFromFormat($dateFormat ?: self::DATE_FORMAT, trim($headerValue))) {
             return (float) $date->format('U') - time();
         }
 

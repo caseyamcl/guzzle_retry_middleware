@@ -85,7 +85,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     /**
      * Provides data for test above
      *
-     * @return array
+     * @return array<array>
      */
     public function providerForRetryOccursWhenStatusCodeMatches(): array
     {
@@ -100,7 +100,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      * Test that the max_retry_attempts parameter is respected
      *
      * @dataProvider retriesFailAfterSpecifiedLimitProvider
-     * @param array $responses
+     * @param array<array> $responses
      */
     public function testRetriesFailAfterSpecifiedLimit(array $responses): void
     {
@@ -132,7 +132,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      * #0 is a collection of 10 429 exceptions, and data-set
      * #1 is a collection of 10 connect timeouts
      *
-     * @return array
+     * @return array<array>
      */
     public function retriesFailAfterSpecifiedLimitProvider(): array
     {
