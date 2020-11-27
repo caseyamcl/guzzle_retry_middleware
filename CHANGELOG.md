@@ -4,7 +4,7 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## UNRELEASED
+## v2.6.1 (2020-11-27)
 ### Added
 - PHPStan in dev dependencies
 - Additional build checks (PHPStan and PHP-CS)
