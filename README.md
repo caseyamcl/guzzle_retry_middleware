@@ -424,12 +424,12 @@ If you discover any security related issues, please email caseyamcl@gmail.com in
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
 
-[ico-version]: https://img.shields.io/packagist/v/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
-[ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
+[ico-version]: https://img.shields.io/packagist/v/caseyamcl/guzzle_retry_middleware.svg?style=flat
+[ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
 [ico-ghbuild]: https://github.com/caseyamcl/guzzle_retry_middleware/workflows/Github%20Build/badge.svg
-[ico-phpstan]: https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?style=flat-square
+[ico-phpstan]: https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?style=flat
 [ico-coverage]: https://github.com/caseyamcl/guzzle_retry_middleware/blob/master/coverage.svg
-[ico-downloads]: https://img.shields.io/packagist/dt/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
+[ico-downloads]: https://img.shields.io/packagist/dt/caseyamcl/guzzle_retry_middleware.svg?style=flat
 
 [link-packagist]: https://packagist.org/packages/caseyamcl/guzzle_retry_middleware
 [link-phpstan]: https://phpstan.org/
