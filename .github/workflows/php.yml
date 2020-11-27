@@ -36,4 +36,3 @@ jobs:
         run: composer check-style
       - name: Run test suite
         run: vendor/bin/phpunit
-

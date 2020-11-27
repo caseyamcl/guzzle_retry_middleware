@@ -3,12 +3,12 @@
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
 [![Github Build][ico-ghbuild]][link-ghbuild]
-[![Code coverage][ico-coverage]]
-[![PHPStan Level 8][ico-phpstan]]
+[![Code coverage][ico-coverage]](coverage.svg)
+[![PHPStan Level 8][ico-phpstan]][link-phpstan]
 [![Total Downloads][ico-downloads]][link-downloads]
 
 This is a [Guzzle v6+](http://guzzlephp.org) middleware library that implements automatic
-retry of requests when HTTP servers respond with `503` or `429` status codes.  It can also
+retry of requests when HTTP servers respond with `503` or `429` status codes. It can also
 be configured to retry requests that timeout.
  
 If a server supplies a [Retry-After header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After), 
@@ -22,10 +22,10 @@ Features, at-a-glance:
 - Automatically retries HTTP requests when a server responds with a 429 or 503 status (or any HTTP status code; this is configurable)
 - Sets a retry delay based on the `Retry-After` HTTP header, if it is sent, or automatically backs off exponentially if
   no `Retry-After` header is sent (also configurable)
-- Optionally retries requests that time out (based on the `connect_timeout` or `timeout` options)
+- Optionally retries requests that time out (via the `connect_timeout` or `timeout` options)
 - Set an optional callback when a retry occurs (useful for logging/reporting)
 - Specify a maximum number of retry attempts before giving up (default: 10)
-- 100% test coverage, good inline documentation, and PSR-12 compliant
+- Near-100% test coverage, good inline documentation, and PSR-12 compliant
 
 ## Install
 
@@ -82,7 +82,6 @@ The following options are available:
 | `retry_after_date_format`          | string            | `D, d M Y H:i:s T` | Optional customization for servers that return date/times that violate the HTTP spec
 
 Each option is discussed in detail below.
-
 
 ### Configuring Options
 
@@ -433,6 +432,7 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [ico-downloads]: https://img.shields.io/packagist/dt/caseyamcl/guzzle_retry_middleware.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/caseyamcl/guzzle_retry_middleware
+[link-phpstan]: https://phpstan.org/
 [link-ghbuild]: https://github.com/caseyamcl/guzzle_retry_middleware/actions?query=workflow%3A%22Github+Build%22
 [link-downloads]: https://packagist.org/packages/caseyamcl/guzzle_retry_middleware
 [link-author]: https://github.com/caseyamcl

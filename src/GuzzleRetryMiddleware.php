@@ -24,6 +24,7 @@ use DateTime;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -112,7 +113,7 @@ class GuzzleRetryMiddleware
      */
     public static function factory(array $defaultOptions = []): Closure
     {
-        return function (callable $handler) use ($defaultOptions) {
+        return function (callable $handler) use ($defaultOptions): self {
             return new static($handler, $defaultOptions);
         };
     }
@@ -183,7 +184,7 @@ class GuzzleRetryMiddleware
      */
     protected function onRejected(RequestInterface $request, array $options): callable
     {
-        return function ($reason) use ($request, $options) {
+        return function ($reason) use ($request, $options): PromiseInterface {
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
                 if ($this->shouldRetryHttpResponse($options, $reason->getResponse())) {
@@ -291,7 +292,7 @@ class GuzzleRetryMiddleware
                 $options['on_retry_callback'],
                 [
                     (int) $options['retry_count'],
-                    (float) $delayTimeout,
+                    $delayTimeout,
                     &$request,
                     &$options,
                     $response
@@ -348,7 +349,7 @@ class GuzzleRetryMiddleware
             $timeout = $this->deriveTimeoutFromHeader(
                 $response->getHeader($options['retry_after_header'])[0],
                 $options['retry_after_date_format']
-            ) ?: $defaultDelayTimeout;
+            ) ?? $defaultDelayTimeout;
         } else {
             $timeout = abs($defaultDelayTimeout);
         }

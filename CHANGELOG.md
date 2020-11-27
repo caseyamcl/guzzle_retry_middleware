@@ -7,12 +7,18 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## UNRELEASED
 ### Added
 - PHPStan in dev dependencies
+- Additional build checks (PHPStan and PHP-CS)
+- Automatic SVG badge generation for code coverage
 
 ### Fixed
 - Made `GuzzleRetryMiddleware::__construct` method final
 - `$options` parameter comments PHPStan was complaining about
 - `shouldRetryHttpResponse` values assume that the `$response` parameter is not null
 - Ensure date `$dateFormat` is never NULL or empty string in `deriveTimeoutFromHeader`
+- Additional cleanup based on PHPStan report
+
+### Removed
+- Build dependency on scrutinizer.org service
 
 ## v2.6 (2020-11-24)
 ### Added
