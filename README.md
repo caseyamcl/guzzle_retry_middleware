@@ -3,8 +3,8 @@
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
 [![Github Build][ico-ghbuild]][link-ghbuild]
-[ico-coverage]
-[ico-phpstan]
+[[Code coverage][ico-coverage]]
+[[PHPStan Level 8][ico-phpstan]]
 [![Total Downloads][ico-downloads]][link-downloads]
 
 This is a [Guzzle v6+](http://guzzlephp.org) middleware library that implements automatic
