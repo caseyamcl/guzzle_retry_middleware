@@ -55,7 +55,7 @@ class GuzzleRetryMiddleware
     public const RETRY_AFTER_HEADER = 'Retry-After';
 
     /**
-     * @var array<mixed>
+     * @var array<string,mixed>
      */
     private $defaultOptions = [
 
@@ -108,7 +108,7 @@ class GuzzleRetryMiddleware
      * Example:
      * <code>$handlerStack->push(GuzzleRetryMiddleware::factory());</code>
      *
-     * @param array<mixed> $defaultOptions
+     * @param array<string,mixed> $defaultOptions
      * @return Closure
      */
     public static function factory(array $defaultOptions = []): Closure
@@ -122,7 +122,7 @@ class GuzzleRetryMiddleware
      * GuzzleRetryMiddleware constructor.
      *
      * @param callable $nextHandler
-     * @param array<mixed> $defaultOptions
+     * @param array<string,mixed> $defaultOptions
      */
     final public function __construct(callable $nextHandler, array $defaultOptions = [])
     {
@@ -132,7 +132,7 @@ class GuzzleRetryMiddleware
 
     /**
      * @param RequestInterface $request
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @return Promise
      */
     public function __invoke(RequestInterface $request, array $options): Promise
@@ -160,7 +160,7 @@ class GuzzleRetryMiddleware
      * be unsuccessful (e.g. 429 or 503), so check to see if it should be retried
      *
      * @param RequestInterface $request
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @return callable
      */
     protected function onFulfilled(RequestInterface $request, array $options): callable
@@ -179,7 +179,7 @@ class GuzzleRetryMiddleware
      * the request can be retried.  Otherwise, pass it on.
      *
      * @param RequestInterface $request
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @return callable
      */
     protected function onRejected(RequestInterface $request, array $options): callable
@@ -211,7 +211,7 @@ class GuzzleRetryMiddleware
     /**
      * Decide whether or not to retry on connect exception
      *
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @return bool
      */
     protected function shouldRetryConnectException(array $options): bool
@@ -229,7 +229,7 @@ class GuzzleRetryMiddleware
      * 1. The response status code against the status codes that should be retried
      * 2. The number of attempts made thus far for this request
      *
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @param ResponseInterface|null $response
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
@@ -254,7 +254,7 @@ class GuzzleRetryMiddleware
     /**
      * Count the number of retries remaining.  Always returns 0 or greater.
      *
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @return int
      */
     protected function countRemainingRetries(array $options): int
@@ -274,7 +274,7 @@ class GuzzleRetryMiddleware
      * Increments the retry count, determines the delay (timeout), executes callbacks, sleeps, and re-send the request
      *
      * @param RequestInterface $request
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @param ResponseInterface|null $response
      * @return Promise
      */
@@ -327,7 +327,7 @@ class GuzzleRetryMiddleware
      * Attempts to read and interpret the configured retry after header, or defaults
      * to a built-in incremental back-off algorithm.
      *
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @param ResponseInterface|null $response
      * @return float  Delay timeout, in seconds
      */

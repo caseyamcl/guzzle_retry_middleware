@@ -4,6 +4,10 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## UNRELEASED
+### Changed
+- (PhpStan) Improved comments for options array
+
 ## v2.6.1 (2020-11-27)
 ### Added
 - PHPStan in dev dependencies
