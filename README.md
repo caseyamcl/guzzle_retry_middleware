@@ -75,7 +75,7 @@ The following options are available:
 | `retry_on_status`                  | array<int>        | 503, 429           | The response status codes that will trigger a retry
 | `default_retry_multiplier`         | float or callable | 1.5                | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details)
 | `on_retry_callback`                | callable          | null               | Optional callback to call when a retry occurs
-| `retry_on_timeout`                 | boolean           | false              | Set to TRUE if you wish to retry requests that timeout (configured with `connect_timeout` or `timeout` options)
+| `retry_on_timeout`                 | boolean           | false              | Set to TRUE if you wish to retry requests that throw a ConnectException such as a timeout or 'connection refused'
 | `expose_retry_header`              | boolean           | false              | Set to TRUE if you wish to expose the number of retries as a header on the response object
 | `retry_header`                     | string            | X-Retry-Counter    | The header key to use for the retry counter (if you need it)
 | `retry_after_header`               | string            | Retry-After        | The header key to use for the retry after header.
