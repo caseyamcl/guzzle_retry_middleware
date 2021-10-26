@@ -310,7 +310,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $calculatedDelay = null;
 
         $responses = [
-            new Response(429, ['Retry-After' => 3], 'Wait'),
+            new Response(429, ['Retry-After' => '3'], 'Wait'),
             new Response(200, [], 'Good')
         ];
 
@@ -722,7 +722,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $calculatedDelay = null;
 
         $responses = [
-            new Response(429, ['Retry-After' => 3.2], 'Wait'),
+            new Response(429, ['Retry-After' => '3.2'], 'Wait'),
             new Response(200, [], 'Good')
         ];
 
