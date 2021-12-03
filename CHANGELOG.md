@@ -5,6 +5,8 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
 ## UNRELEASED
+### Added
+- Support PHP v8.1
 ### Changed
 - (PhpStan) Improved comments for options array
 
