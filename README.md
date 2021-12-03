@@ -71,6 +71,7 @@ The following options are available:
 | `retry_enabled`                    | boolean           | true               | Is retry enabled (useful for disabling per individual request)                                                                   |
 | `max_retry_attempts`               | integer           | 10                 | Maximum number of retries per request                                                                                            |
 | `max_allowable_timeout_secs`       | integer           | null               | If set, specifies a hard ceiling in seconds that the client can wait between requests                                            | 
+| `give_up_after_secs`               | integer           | null               | If set, specifies a hard ceiling in seconds that this middleware will allow retries                                              |
 | `retry_only_if_retry_after_header` | boolean           | false              | Retry only if `RetryAfter` header sent                                                                                           |
 | `retry_on_status`                  | array<int>        | 503, 429           | The response status codes that will trigger a retry                                                                              |
 | `default_retry_multiplier`         | float or callable | 1.5                | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details) |
@@ -361,20 +362,10 @@ library expects. By default, this library expects an RFC 2822 header as defined 
 edge-cases, the server may implement some other date format. This library allows for the
 possibility of that.
 
-```php
-# Change the expected date format of the `Retry-After` header
-$response = $client->get('/some-path', [
-    'retry_after_date_format' => 'Y-m-d H:i:s'
-]);
-
-# Otherwise, the default date format for the `Retry-After` header will be used.
-# (ex. 'Wed, 24 Nov 2020 07:28:00 GMT')
-$response = $client->get('/some-path');
-```
-
 *Note*: Be careful not to use this option with the Unix epoch (`u`) format.  The
 client will interpret this value as an integer and subsequently timeout  
 for a very, very long time.
+
 
 ### Setting a maximum allowable timeout value
 
@@ -392,6 +383,22 @@ $response = $client->get('/some-path', [
     'max_allowable_timeout_secs' => 120
 ]);
 ```
+
+
+### Setting a hard ceiling for all retries
+
+If you want to set a hard time-limit for all retry requests, set the `give_up_after_secs` option. If set, this will be
+checked before the number of retries is, so any requests will fail even if you haven't reached your retry count limit.
+
+```php
+# This will fail when either the number of seconds is reached, or the number of retry attempts is reached, whichever
+# comes first 
+$response = $client->get('/some-path', [
+   'max_retry_attempts' => 10 
+   'give_up_after_secs' => 10
+]);
+```
+
 
 ## Change log
 
