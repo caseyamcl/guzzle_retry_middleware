@@ -144,6 +144,9 @@ class GuzzleRetryMiddleware
         // Combine options with defaults specified by this middleware
         $options = array_replace($this->defaultOptions, $options);
 
+        // Set the request timestamp as far as we know it
+        $options['request_timestamp'] = time();
+
         // Set the retry counter if not already set
         if (! isset($options['retry_count'])) {
             $options['retry_count'] = 0;
@@ -226,16 +229,18 @@ class GuzzleRetryMiddleware
     {
         return $options['retry_enabled']
             && ($options['retry_on_timeout'] ?? false)
+            && $this->hasTimeAvailable($options) !== false
             && $this->countRemainingRetries($options) > 0;
     }
 
     /**
-     * Check to see if a request can be retried
+     * Check whether to retry a request that received an HTTP response
      *
-     * This checks two things:
+     * This checks three things:
      *
      * 1. The response status code against the status codes that should be retried
      * 2. The number of attempts made thus far for this request
+     * 3. If 'give_up_after_secs' option is set, time is still available
      *
      * @param array<string,mixed> $options
      * @param ResponseInterface|null $response
@@ -248,6 +253,7 @@ class GuzzleRetryMiddleware
 
         switch (true) {
             case $options['retry_enabled'] === false:
+            case $this->hasTimeAvailable($options) === false:
             case $this->countRemainingRetries($options) === 0: // No Retry-After header, and it is required?  Give up!
             case (! $hasRetryAfterHeader && $options['retry_only_if_retry_after_header']):
                 return false;
@@ -365,10 +371,34 @@ class GuzzleRetryMiddleware
 
         // If the max_allowable_timeout_secs is set, ensure the timeout value is less than that
         if (! is_null($options['max_allowable_timeout_secs']) && abs($options['max_allowable_timeout_secs']) > 0) {
-            return min(abs($timeout), (float) abs($options['max_allowable_timeout_secs']));
+            $timeout = min(abs($timeout), (float) abs($options['max_allowable_timeout_secs']));
         } else {
-            return abs($timeout);
+            $timeout = abs($timeout);
         }
+
+        // If 'give_up_after_secs' is set, account for it in determining the timeout
+        if ($options['give_up_after_secs']) {
+            $giveUpAfterSecs = abs((float) $options['give_up_after_secs']);
+            $timeSinceFirstReq = time() - $options['first_request_timestamp'];
+            $timeout = min($timeout, ($giveUpAfterSecs - $timeSinceFirstReq));
+        }
+
+        return $timeout;
+    }
+
+    /**
+     * @param array<string,mixed> $options
+     * @return bool
+     */
+    protected function hasTimeAvailable(array $options): bool
+    {
+        // If there is not a 'give_up_after_secs' option, or it is set to a non-truthy value, bail
+        if (! $options['give_up_after_secs']) {
+            return true;
+        }
+
+        $giveUpAfterTimestamp = $options['first_request_timestamp'] + abs(intval($options['give_up_after_secs']));
+        return $options['request_timestamp'] < $giveUpAfterTimestamp;
     }
 
     /**
