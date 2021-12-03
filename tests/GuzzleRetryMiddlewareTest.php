@@ -471,7 +471,12 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
-    public function testDelayTakesIntoAccountGiveUpAfter(): void
+    public function testGiveUpAfterWorksOnConnectTimeouts(): void
+    {
+        // TODO: This...
+    }
+
+    public function testDelayTakesIntoAccountGiveUpAfterTime(): void
     {
         $delayTimes = [];
 
