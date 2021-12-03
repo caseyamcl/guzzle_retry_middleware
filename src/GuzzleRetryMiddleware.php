@@ -27,6 +27,7 @@ use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
 use function call_user_func;
 use function call_user_func_array;
@@ -71,6 +72,9 @@ class GuzzleRetryMiddleware
 
         // Maximum allowable timeout seconds
         'max_allowable_timeout_secs'       => null,
+
+        // Give up after seconds
+        'give_up_after_secs'               => null,
 
         // Set this to TRUE to retry only if the HTTP Retry-After header is specified
         'retry_only_if_retry_after_header' => false,
@@ -145,6 +149,10 @@ class GuzzleRetryMiddleware
             $options['retry_count'] = 0;
         }
 
+        if ($options['retry_count'] === 0) {
+            $options['first_request_timestamp'] = time();
+        }
+
         $next = $this->nextHandler;
         return $next($request, $options)
             ->then(
@@ -184,7 +192,7 @@ class GuzzleRetryMiddleware
      */
     protected function onRejected(RequestInterface $request, array $options): callable
     {
-        return function ($reason) use ($request, $options): PromiseInterface {
+        return function (Throwable $reason) use ($request, $options): PromiseInterface {
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
                 if ($this->shouldRetryHttpResponse($options, $reason->getResponse())) {
@@ -240,7 +248,7 @@ class GuzzleRetryMiddleware
 
         switch (true) {
             case $options['retry_enabled'] === false:
-            case $this->countRemainingRetries($options) === 0: // No Retry-After header, and it is required?  Give up
+            case $this->countRemainingRetries($options) === 0: // No Retry-After header, and it is required?  Give up!
             case (! $hasRetryAfterHeader && $options['retry_only_if_retry_after_header']):
                 return false;
 
@@ -271,7 +279,7 @@ class GuzzleRetryMiddleware
     /**
      * Retry the request
      *
-     * Increments the retry count, determines the delay (timeout), executes callbacks, sleeps, and re-send the request
+     * Increments the retry count, determines the delay (timeout), executes callbacks, sleeps, and re-sends the request
      *
      * @param RequestInterface $request
      * @param array<string,mixed> $options
@@ -324,7 +332,7 @@ class GuzzleRetryMiddleware
     /**
      * Determine the delay timeout
      *
-     * Attempts to read and interpret the configured retry after header, or defaults
+     * Attempts to read and interpret the configured Retry-After header, or defaults
      * to a built-in incremental back-off algorithm.
      *
      * @param array<string,mixed> $options
@@ -333,13 +341,14 @@ class GuzzleRetryMiddleware
      */
     protected function determineDelayTimeout(array $options, ?ResponseInterface $response = null): float
     {
+        // If 'default_retry_multiplier' option is a callable, call it to determine the default timeout...
         if (is_callable($options['default_retry_multiplier'])) {
             $defaultDelayTimeout = (float) call_user_func(
                 $options['default_retry_multiplier'],
                 $options['retry_count'],
                 $response
             );
-        } else {
+        } else { // ...or if it is a numeric value (default), use that.
             $defaultDelayTimeout = (float) $options['default_retry_multiplier'] * $options['retry_count'];
         }
 
@@ -354,7 +363,7 @@ class GuzzleRetryMiddleware
             $timeout = abs($defaultDelayTimeout);
         }
 
-        // If the max_allowable_timeout_secs is set
+        // If the max_allowable_timeout_secs is set, ensure the timeout value is less than that
         if (! is_null($options['max_allowable_timeout_secs']) && abs($options['max_allowable_timeout_secs']) > 0) {
             return min(abs($timeout), (float) abs($options['max_allowable_timeout_secs']));
         } else {

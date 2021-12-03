@@ -214,6 +214,39 @@ class GuzzleRetryMiddlewareTest extends TestCase
     }
 
     /**
+     * Test that the X header is injected when requested
+     */
+    public function testFirstRequestTimestampAddedOnlyOnFirstRetry(): void
+    {
+        // Build some responses with 429 headers and one good one
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait...'),
+            new Response(429, [], 'Wait......'),
+            new Response(429, [], 'Wait some more..'),
+            new Response(200, [], 'Good')
+        ];
+
+        $trackingArr = [];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+
+        $client = new Client([
+            'handler' => $stack,
+
+            // set some defaults in Guzzle...
+            'default_retry_multiplier' => 0,
+            'on_retry_callback' => function ($numRetries, $delay, $request, $options) use (&$trackingArr) {
+                $trackingArr[] = $options['first_request_timestamp'];
+            }
+        ]);
+
+        $client->request('GET', '/');
+        $this->assertCount(1, array_unique($trackingArr));
+    }
+
+    /**
      * Test that the X header is not injected when no retries occurred
      */
     public function testHeaderIsNotInjectedWhenNoRetriesOccurred(): void
