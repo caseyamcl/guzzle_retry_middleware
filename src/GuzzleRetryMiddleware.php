@@ -140,7 +140,7 @@ class GuzzleRetryMiddleware
         // Combine options with defaults specified by this middleware
         $options = array_replace($this->defaultOptions, $options);
 
-        // Set the retry count if not already set
+        // Set the retry counter if not already set
         if (! isset($options['retry_count'])) {
             $options['retry_count'] = 0;
         }
@@ -209,7 +209,7 @@ class GuzzleRetryMiddleware
     }
 
     /**
-     * Decide whether or not to retry on connect exception
+     * Decide whether to retry on connect exception
      *
      * @param array<string,mixed> $options
      * @return bool
@@ -236,7 +236,7 @@ class GuzzleRetryMiddleware
     protected function shouldRetryHttpResponse(array $options, ?ResponseInterface $response = null): bool
     {
         $statuses = array_map('\intval', (array) $options['retry_on_status']);
-        $hasRetryAfterHeader = $response ? $response->hasHeader('Retry-After') : false;
+        $hasRetryAfterHeader = $response && $response->hasHeader('Retry-After');
 
         switch (true) {
             case $options['retry_enabled'] === false:
@@ -308,7 +308,7 @@ class GuzzleRetryMiddleware
     }
 
     /**
-     * @param array<mixed> $options
+     * @param array<string,mixed> $options
      * @param ResponseInterface $response
      * @return ResponseInterface
      */
