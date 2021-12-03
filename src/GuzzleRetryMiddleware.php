@@ -379,7 +379,7 @@ class GuzzleRetryMiddleware
         // If 'give_up_after_secs' is set, account for it in determining the timeout
         if ($options['give_up_after_secs']) {
             $giveUpAfterSecs = abs((float) $options['give_up_after_secs']);
-            $timeSinceFirstReq = time() - $options['first_request_timestamp'];
+            $timeSinceFirstReq =  $options['request_timestamp'] - $options['first_request_timestamp'];
             $timeout = min($timeout, ($giveUpAfterSecs - $timeSinceFirstReq));
         }
 
