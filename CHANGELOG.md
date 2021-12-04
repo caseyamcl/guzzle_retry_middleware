@@ -7,8 +7,10 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## UNRELEASED
 ### Added
 - Support PHP v8.1
+- New [`give_up_after_secs` parameter](./README.md#setting-a-hard-ceiling-for-all-retries)
 ### Changed
-- (PhpStan) Improved comments for options array
+- Upgraded to PHPStan 1.2
+- Improved comments for options array
 
 ## v2.6.1 (2020-11-27)
 ### Added
