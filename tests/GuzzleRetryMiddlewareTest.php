@@ -59,7 +59,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      * @param Response $response
      * @param bool $retryShouldOccur
      */
-    public function testRetryOccursWhenStatusCodeMatches(Response $response, $retryShouldOccur): void
+    public function testRetryOccursWhenStatusCodeMatches(Response $response, bool $retryShouldOccur): void
     {
         $retryOccurred = false;
 
@@ -473,7 +473,36 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     public function testGiveUpAfterWorksOnConnectTimeouts(): void
     {
-        // TODO: This...
+        $this->expectException(ConnectException::class);
+
+        $responses = [
+
+            new ConnectException(
+                'Connection timed out',
+                new Request('get', '/'),
+                null,
+                ['errno' => 28]
+            ),
+
+            new ConnectException(
+                'Connection timed out',
+                new Request('get', '/'),
+                null,
+                ['errno' => 28]
+            ),
+
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => 5,
+            'retry_on_timeout' => true,
+            'give_up_after_secs' => 1
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
     }
 
     public function testDelayTakesIntoAccountGiveUpAfterTime(): void
