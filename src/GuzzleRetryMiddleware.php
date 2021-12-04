@@ -37,7 +37,7 @@ use function is_callable;
 /**
  * Retry After Middleware
  *
- * Guzzle 6 middleware that retries requests when encountering responses
+ * Guzzle 6/7 middleware that retries requests when encountering responses
  * with certain conditions (429 or 503).  This middleware also respects
  * the `RetryAfter` header
  *
