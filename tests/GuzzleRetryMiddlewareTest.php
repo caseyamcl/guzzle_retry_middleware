@@ -59,7 +59,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      * @param Response $response
      * @param bool $retryShouldOccur
      */
-    public function testRetryOccursWhenStatusCodeMatches(Response $response, $retryShouldOccur): void
+    public function testRetryOccursWhenStatusCodeMatches(Response $response, bool $retryShouldOccur): void
     {
         $retryOccurred = false;
 
@@ -79,7 +79,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $response = $client->request('GET', '/');
 
         $this->assertEquals($retryShouldOccur, $retryOccurred);
-        $this->assertEquals('All Good', (string) $response->getBody());
+        $this->assertEquals('All Good', (string)$response->getBody());
     }
 
     /**
@@ -90,9 +90,9 @@ class GuzzleRetryMiddlewareTest extends TestCase
     public function providerForRetryOccursWhenStatusCodeMatches(): array
     {
         return [
-            [new Response(429, [], 'back off'),       true],
+            [new Response(429, [], 'back off'), true],
             [new Response(503, [], 'back off buddy'), true],
-            [new Response(200, [], 'All Good'),       false]
+            [new Response(200, [], 'All Good'), false]
         ];
     }
 
@@ -109,10 +109,10 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $stack = HandlerStack::create(new MockHandler($responses));
 
         $stack->push(GuzzleRetryMiddleware::factory([
-            'max_retry_attempts'       => 5, // Allow only 5 attempts
-            'retry_on_timeout'         => true,
+            'max_retry_attempts' => 5, // Allow only 5 attempts
+            'retry_on_timeout' => true,
             'default_retry_multiplier' => 0,
-            'on_retry_callback'        => function ($num) use (&$retryCount) {
+            'on_retry_callback' => function ($num) use (&$retryCount) {
                 $retryCount = $num;
             }
         ]));
@@ -172,15 +172,15 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
             // set some defaults in Guzzle..
             'default_retry_multiplier' => 0,
-            'max_retry_attempts'       => 2,
-            'on_retry_callback'        => function ($retryCount) use (&$numRetries) {
+            'max_retry_attempts' => 2,
+            'on_retry_callback' => function ($retryCount) use (&$numRetries) {
                 $numRetries = $retryCount;
             }
         ]);
 
         $response = $client->request('GET', '/');
         $this->assertEquals(2, $numRetries);
-        $this->assertEquals('Good', (string) $response->getBody());
+        $this->assertEquals('Good', (string)$response->getBody());
     }
 
     /**
@@ -203,14 +203,73 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
             // set some defaults in Guzzle..
             'default_retry_multiplier' => 0,
-            'max_retry_attempts'       => 2,
-            'expose_retry_header'      => true
+            'max_retry_attempts' => 2,
+            'expose_retry_header' => true
         ]);
 
         $response = $client->request('GET', '/');
         $this->assertTrue($response->hasHeader(GuzzleRetryMiddleware::RETRY_HEADER));
         $this->assertEquals([2], $response->getHeader(GuzzleRetryMiddleware::RETRY_HEADER));
-        $this->assertEquals('Good', (string) $response->getBody());
+        $this->assertEquals('Good', (string)$response->getBody());
+    }
+
+    public function testTimestampsAreAppliedToAllRequests(): void
+    {
+        // Build some responses with 429 headers and one good one
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait...'),
+            new Response(200, [], 'Good')
+        ];
+
+        $trackingArr = [];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+
+        $client = new Client([
+            'handler' => $stack,
+
+            // set some defaults in Guzzle...
+            'default_retry_multiplier' => 1,
+            'on_retry_callback' => function ($numRetries, $delay, $request, $options) use (&$trackingArr) {
+                $trackingArr[] = $options['request_timestamp'];
+            }
+        ]);
+
+        $client->request('GET', '/');
+        $this->assertCount(2, array_unique($trackingArr));
+    }
+
+    /**
+     * Test that the X header is injected when requested
+     */
+    public function testFirstRequestTimestampAddedOnlyOnFirstRetry(): void
+    {
+        // Build some responses with 429 headers and one good one
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(429, [], 'Wait...'),
+            new Response(200, [], 'Good')
+        ];
+
+        $trackingArr = [];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+
+        $client = new Client([
+            'handler' => $stack,
+
+            // set some defaults in Guzzle...
+            'default_retry_multiplier' => 1,
+            'on_retry_callback' => function ($numRetries, $delay, $request, $options) use (&$trackingArr) {
+                $trackingArr[] = $options['first_request_timestamp'];
+            }
+        ]);
+
+        $client->request('GET', '/');
+        $this->assertCount(1, array_unique($trackingArr));
     }
 
     /**
@@ -230,13 +289,13 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
             // set some defaults in Guzzle..
             'default_retry_multiplier' => 0,
-            'max_retry_attempts'       => 2,
-            'expose_retry_header'            => true
+            'max_retry_attempts' => 2,
+            'expose_retry_header' => true
         ]);
 
         $response = $client->request('GET', '/');
         $this->assertFalse($response->hasHeader(GuzzleRetryMiddleware::RETRY_HEADER));
-        $this->assertEquals('Good', (string) $response->getBody());
+        $this->assertEquals('Good', (string)$response->getBody());
     }
 
     /**
@@ -263,14 +322,14 @@ class GuzzleRetryMiddlewareTest extends TestCase
         // Override default settings in request
         $response = $client->request('GET', '/', [
             'default_retry_multiplier' => 0,
-            'max_retry_attempts'       => 2,
-            'on_retry_callback'        => function ($retryCount) use (&$numRetries) {
+            'max_retry_attempts' => 2,
+            'on_retry_callback' => function ($retryCount) use (&$numRetries) {
                 $numRetries = $retryCount;
             }
         ]);
 
         $this->assertEquals(2, $numRetries);
-        $this->assertEquals('Good', (string) $response->getBody());
+        $this->assertEquals('Good', (string)$response->getBody());
     }
 
     /**
@@ -412,6 +471,68 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals([0.5 * 1, 0.5 * 2, 0.5 * 3], $delayTimes);
     }
 
+    public function testGiveUpAfterWorksOnConnectTimeouts(): void
+    {
+        $this->expectException(ConnectException::class);
+
+        $responses = [
+
+            new ConnectException(
+                'Connection timed out',
+                new Request('get', '/'),
+                null,
+                ['errno' => 28]
+            ),
+
+            new ConnectException(
+                'Connection timed out',
+                new Request('get', '/'),
+                null,
+                ['errno' => 28]
+            ),
+
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => 5,
+            'retry_on_timeout' => true,
+            'give_up_after_secs' => 1
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+    }
+
+    public function testDelayTakesIntoAccountGiveUpAfterTime(): void
+    {
+        $delayTimes = [];
+
+        $responses = [
+            new Response(429, ['Retry-After' => '3'], 'Wait'),
+            new Response(429, ['Retry-After' => '10'], 'Wait'),
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'give_up_after_secs' => 10,
+            'on_retry_callback' => function ($numRetries, $delay) use (&$delayTimes) {
+                $delayTimes[] = $delay;
+            }
+        ]));
+
+        try {
+            $client = new Client(['handler' => $stack]);
+            $client->request('GET', '/');
+            $this->fail('Should have timed out');
+        } catch (ClientException $e) {
+            $this->assertEquals([3.0, 7.0], $delayTimes);
+        }
+    }
+
     /**
      * Test that the retry after header override retrieves proper custom header
      */
@@ -420,8 +541,8 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $delayTimes = [];
 
         $responses = [
-            new Response(429, [ 'X-Custom-Retry-After' => '2' ], 'Wait'),
-            new Response(429, [ 'X-Custom-Retry-After' => '1' ], 'Wait'),
+            new Response(429, ['X-Custom-Retry-After' => '2'], 'Wait'),
+            new Response(429, ['X-Custom-Retry-After' => '1'], 'Wait'),
             new Response(200, [], 'Good'),
         ];
 
@@ -442,7 +563,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     public function testRetryMultiplierWorksAsCallback(): void
     {
         $programmedDelays = [0.5, 0.1, 0.3];
-        $actualDelays     = [];
+        $actualDelays = [];
 
         $responses = [
             new Response(429, [], 'Wait'),
@@ -538,7 +659,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     public function testConnectTimeoutIsHandledWhenOptionIsSetToTrue(): void
     {
-        // Send a connect timeout (cURL error 28) then a good response
+        // Send connect timeout (cURL error 28) then a good response
         $responses = [
 
             new ConnectException(
@@ -562,7 +683,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     public function testConnectTimeoutIsNotHandledWhenOptionIsSetToFalse(): void
     {
-        // Send a connect timeout (cURL error 28) then a good response
+        // Send connect timeout (cURL error 28) then a good response
         $responses = [
 
             new ConnectException(
@@ -616,6 +737,48 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
         $client = new Client(['handler' => $stack]);
         $client->request('GET', '/');
+    }
+
+    public function testGiveUpAfterSecsFailsWhenTimeLimitExceeded(): void
+    {
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('429');
+
+        $responses = [
+            new Response(429, [], 'Wait 1'),
+            new Response(429, [], 'Wait 2'),
+            new Response(429, [], 'Wait 3'),
+            new Response(429, [], 'Wait 4'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => 1.5,
+            'give_up_after_secs' => 1
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+    }
+
+    public function testGiveUpAfterSecsSucceedsWhenTimeLimitNotExceeded(): void
+    {
+        $responses = [
+            new Response(429, [], 'Wait 1'),
+            new Response(429, [], 'Wait 2'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => 1.1,
+            'give_up_after_secs' => 5
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $response = $client->request('GET', '/');
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     /**
