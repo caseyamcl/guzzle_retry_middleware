@@ -4,6 +4,11 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## 2.7.1 (2022-08-07)
+### Fixed
+- Composer 2.2+ security issue with installing `phpstan/extension-installer`
+- Ensure `XDEBUG_MODE` environment variable is set when running PHPUnit
+
 ## 2.7 (2021-12-03)
 ### Added
 - Support PHP v8.1
