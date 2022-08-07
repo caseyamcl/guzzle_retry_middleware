@@ -7,7 +7,7 @@
 [![PHPStan Level 8][ico-phpstan]][link-phpstan]
 [![Total Downloads][ico-downloads]][link-downloads]
 
-This is a [Guzzle v6+](http://guzzlephp.org) middleware library that implements automatic
+This is a [Guzzle v6/7+](https://docs.guzzlephp.org) middleware library that implements automatic
 retry of requests when HTTP servers respond with `503` or `429` status codes. It can also
 be configured to retry requests that timeout.
  
