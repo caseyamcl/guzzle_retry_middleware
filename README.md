@@ -81,6 +81,7 @@ The following options are available:
 | `retry_header`                     | string            | X-Retry-Counter    | The header key to use for the retry counter (if you need it)                                                                     |
 | `retry_after_header`               | string            | Retry-After        | The remote server header key to look for information about how long to wait until retrying the request.                          |
 | `retry_after_date_format`          | string            | `D, d M Y H:i:s T` | Optional customization for servers that return date/times that violate the HTTP spec                                             |
+| `should_retry_callback`            | callable          | null               | Optional callback to decide whether or not retry the request                                                                     |
 
 Each option is discussed in detail below.
 
@@ -228,14 +229,14 @@ You can configure this middleware to retry requests that timeout.  Simply set th
 
 ```php
 
-# Retry this request if it times out:
+// Retry this request if it times out:
 $response = $client->get('/some-path', [
     'retry_on_timeout' => true,    // Set the retry middleware to retry when the connection or response times out
     'connect_timeout'  => 20,     // This is a built-in Guzzle option
     'timeout'          => 50      // This is also a built-in Guzzle option
 ]);
 
-# You can also set these as defaults for every request:
+// You can also set these as defaults for every request:
 $guzzle = new \GuzzleHttp\Client(['retry_on_timeout' => true, 'connect_timeout' => 20]);
 $response = $guzzle->get('https://example.org');
 ```
@@ -316,25 +317,25 @@ server, you can also use [callbacks](#on-retry-callback) to get the request coun
 Example:
 
 ```php
-# Retry this request if it times out:
+// Retry this request if it times out:
 $response = $client->get('/some-path', [
     'expose_retry_header' => true  // This adds the 'X-Retry-Counter' if a request was retried
 ]);
 
-# If a request was retried, the response will include the 'X-Retry-Counter'
+// If a request was retried, the response will include the 'X-Retry-Counter'
 $numRetries = (int) $response->getHeaderLine('X-Retry-Counter');
 ```
 
 You can also specify a custom header key:
 
 ```php
-# Retry this request if it times out:
+// Retry this request if it times out:
 $response = $client->get('/some-path', [
     'expose_retry_header' => true,
     'retry_header'        => 'X-Retry-Count'
 ]);
 
-# If a request was retried, the response will include the 'X-Retry-Counter'
+// If a request was retried, the response will include the 'X-Retry-Counter'
 $numRetries = (int) $response->getHeaderLine('X-Retry-Count');
 ```
 
@@ -345,12 +346,12 @@ the client looks for the `Retry-After` header, but in some edge-cases, servers m
 to respond with a different header.
 
 ```php
-# Change the name of the expected retry after header to something else:
+// Change the name of the expected retry after header to something else:
 $response = $client->get('/some-path', [
     'retry_after_header' => 'X-Custom-Retry-After-Seconds'
 ]);
 
-# Otherwise, the default `Retry-After` header will be used.
+// Otherwise, the default `Retry-After` header will be used.
 $response = $client->get('/some-path');
 ```
 
@@ -377,8 +378,8 @@ using the default backoff algorithm or returned from the server via the `Retry-A
 By default, this value is `null`, which means there is no limit.
 
 ```php
-# Set the maximum allowable timeout
-# If the calculated value exceeds 120 seconds, then just return 120 seconds
+// Set the maximum allowable timeout
+// If the calculated value exceeds 120 seconds, then just return 120 seconds
 $response = $client->get('/some-path', [
     'max_allowable_timeout_secs' => 120
 ]);
@@ -391,14 +392,48 @@ If you want to set a hard time-limit for all retry requests, set the `give_up_af
 checked before the number of retries is, so any requests will fail even if you haven't reached your retry count limit.
 
 ```php
-# This will fail when either the number of seconds is reached, or the number of retry attempts is reached, whichever
-# comes first 
+// This will fail when either the number of seconds is reached, or the number of retry attempts is reached, whichever
+// comes first 
 $response = $client->get('/some-path', [
    'max_retry_attempts' => 10 
    'give_up_after_secs' => 10
 ]);
 ```
 
+### Custom retry decision logic
+
+Occasionally, servers will fail to provide an appropriate HTTP error code when a response needs to be retried. For example,
+consider a server that returns a `200` status code, but with a message body instructing you to wait. In cases like this,
+you can use the `should_retry_callback` option to implement a callback method that returns `true` (should retry) or `false` 
+(should not retry).
+
+It's important to note that the callback will be called only if all the following circumstances are true:
+
+* The `retry_enabled` option is `true` (default: `true`)
+* The number of retries has not exceeded the value set in `max_retry_attempts` (default: `10`)
+* The total time elapsed is less than the `give_up_after_secs` value (default: _disabled_)
+
+```php
+use Psr\Http\Message\ResponseInterface;
+
+
+$callback = function (array $options, ?ResponseInterface $response = null): bool {
+    // Response will be NULL in the event of a connection timeout, so your callback function
+    // will need to be able to handle that case
+    if (! $response) {
+        return true;
+    }
+
+    // Get the HTTP body as a string
+    $body = (string) $response->getBody();
+    return str_contains($body, 'error'); // NOTE: The str_contains function is available only in PHP 8+ 
+};
+
+$response = $client->get('/some-path', [
+    // ..other options..,
+   'should_retry_callback' => $callback
+]);
+```
 
 ## Change log
 

@@ -98,7 +98,10 @@ class GuzzleRetryMiddleware
         'retry_after_header'               => self::RETRY_AFTER_HEADER,
 
         // Date format
-        'retry_after_date_format'          => self::DATE_FORMAT
+        'retry_after_date_format'          => self::DATE_FORMAT,
+
+        // Decider callback
+        'should_retry_callback'            => null
     ];
 
     /**
@@ -254,7 +257,15 @@ class GuzzleRetryMiddleware
         switch (true) {
             case $options['retry_enabled'] === false:
             case $this->hasTimeAvailable($options) === false:
-            case $this->countRemainingRetries($options) === 0: // No Retry-After header, and it is required?  Give up!
+            case $this->countRemainingRetries($options) === 0:
+                return false;
+
+            // Has 'should_retry_callback' option?
+            case $options['should_retry_callback']:
+                return (bool) call_user_func($options['should_retry_callback'], $options, $response);
+
+            // No Retry-After header, and it is required?  Give up!
+            // (note: this has to be after the 'should_retry_callback' case)
             case (! $hasRetryAfterHeader && $options['retry_only_if_retry_after_header']):
                 return false;
 
@@ -273,9 +284,9 @@ class GuzzleRetryMiddleware
      */
     protected function countRemainingRetries(array $options): int
     {
-        $retryCount  = isset($options['retry_count']) ? (int) $options['retry_count'] : 0;
+        $retryCount = isset($options['retry_count']) ? (int) $options['retry_count'] : 0;
 
-        $numAllowed  = isset($options['max_retry_attempts'])
+        $numAllowed = isset($options['max_retry_attempts'])
             ? (int) $options['max_retry_attempts']
             : $this->defaultOptions['max_retry_attempts'];
 

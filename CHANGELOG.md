@@ -4,6 +4,14 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## 2.8.0 (2022-11-20)
+### Added
+- New [`should_retry_callback` parameter](./README.md#custom-retry-decision-logic).
+- GitHub Action build for PHP 8.2
+### Changed
+- Added some extra parameters to PHPStan checks to make sure they don't fail on automated builds
+- Minor `README` updates
+
 ## 2.7.1 (2022-08-07)
 ### Fixed
 - Composer 2.2+ security issue with installing `phpstan/extension-installer`

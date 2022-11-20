@@ -947,4 +947,30 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $client->request('GET', '/');
         $this->assertSame([1 => 1.5, 2 => 2.0, 3 => 2.0], $calculatedDelays);
     }
+
+    public function testDecideCallback(): void
+    {
+        $numTotalRetries = 0;
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(201, [], 'Erroneous content'),
+            new Response(202, [], 'More erroneous content'),
+            new Response(200, [], 'Good content')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'max_allowable_timeout_secs' => 2,
+            'should_retry_callback' => function (array $options, ?ResponseInterface $response) {
+                return $response && $response->getStatusCode() !== 200;
+            },
+            'on_retry_callback' => function () use (&$numTotalRetries) {
+                $numTotalRetries++;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+        $this->assertSame(3, $numTotalRetries);
+    }
 }
