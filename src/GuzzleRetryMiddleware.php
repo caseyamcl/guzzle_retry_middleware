@@ -31,7 +31,7 @@ use Throwable;
 
 use function call_user_func;
 use function call_user_func_array;
-use function GuzzleHttp\Promise\rejection_for;
+use function GuzzleHttp\Promise\rejection_for; /* @phpstan-ignore-line */
 use function in_array;
 use function is_callable;
 
@@ -185,7 +185,7 @@ class GuzzleRetryMiddleware
     protected function onFulfilled(RequestInterface $request, array $options): callable
     {
         return function (ResponseInterface $response) use ($request, $options) {
-            return $this->shouldRetryHttpResponse($options, $response, $request)
+            return $this->shouldRetryHttpResponse($options, $request, $response)
                 ? $this->doRetry($request, $options, $response)
                 : $this->returnResponse($options, $response);
         };
@@ -206,7 +206,7 @@ class GuzzleRetryMiddleware
         return function (Throwable $reason) use ($request, $options): PromiseInterface {
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
-                if ($this->shouldRetryHttpResponse($options, $reason->getResponse(), $request)) {
+                if ($this->shouldRetryHttpResponse($options, $request, $reason->getResponse())) {
                     return $this->doRetry($request, $options, $reason->getResponse());
                 }
             // If this was a connection exception, test to see if we should retry based on connect timeout rules
@@ -222,7 +222,7 @@ class GuzzleRetryMiddleware
             if (class_exists('\GuzzleHttp\Promise\Create')) {
                 return \GuzzleHttp\Promise\Create::rejectionFor($reason);
             } else {
-                return rejection_for($reason);
+                return rejection_for($reason); /* @phpstan-ignore-line */
             }
         };
     }
@@ -242,6 +242,11 @@ class GuzzleRetryMiddleware
             && $this->ensureMethod($options, $request);
     }
 
+    /**
+     * @param array<string,mixed> $options
+     * @param RequestInterface $request
+     * @return bool
+     */
     protected function ensureMethod(array $options, RequestInterface $request): bool
     {
         if ($options['retry_on_methods'] === self::REQUEST_METHODS_ALL) {
@@ -262,14 +267,14 @@ class GuzzleRetryMiddleware
      * 3. If 'give_up_after_secs' option is set, time is still available
      *
      * @param array<string,mixed> $options
+     * @param RequestInterface $request
      * @param ResponseInterface|null $response
-     * @param RequestInterface|null $request
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
     protected function shouldRetryHttpResponse(
         array $options,
-        ?ResponseInterface $response = null,
-        ?RequestInterface $request = null
+        RequestInterface $request,
+        ?ResponseInterface $response = null
     ): bool {
         $statuses = array_map('\intval', (array) $options['retry_on_status']);
         $hasRetryAfterHeader = $response && $response->hasHeader('Retry-After');
