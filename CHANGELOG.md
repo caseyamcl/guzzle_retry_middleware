@@ -6,7 +6,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## UNRELEASED
 ### Added
-- New [`retry_on_methods` parameter]().
+- New [`retry_on_methods` parameter](./README.md#setting-specific-http-methods-to-retry-on).
 ### Changed
 
 ## 2.8.0 (2022-11-20)
@@ -25,7 +25,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## 2.7 (2021-12-03)
 ### Added
 - Support PHP v8.1
-- New [`give_up_after_secs` parameter](./README.md#setting-a-hard-ceiling-for-all-retries)
+- New [`give_up_after_secs` parameter](./README.md#setting-a-hard-time-ceiling-for-all-retries)
 ### Changed
 - Upgraded to PHPStan 1.2
 - Improved comments for options array
