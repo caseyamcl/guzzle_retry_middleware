@@ -7,7 +7,6 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## [2.9.0] (2023-08-30)
 ### Added
 - New [`retry_on_methods` parameter](./README.md#setting-specific-http-methods-to-retry-on).
-### Changed
 
 ## 2.8.0 (2022-11-20)
 ### Added
