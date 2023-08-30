@@ -973,4 +973,53 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $client->request('GET', '/');
         $this->assertSame(3, $numTotalRetries);
     }
+
+    public function testNoRetryIfMethodSpecifiedAndDoesNotMatch(): void
+    {
+        $this->expectException(ClientException::class);
+
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'retry_on_methods' => ['GET', 'POST']
+        ]));
+        $client = new Client(['handler' => $stack]);
+        $client->request('PATCH', '/');
+    }
+
+    public function testRetryIfMethodSpecifiedAndMatches(): void
+    {
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'retry_on_methods' => ['GET', 'POST']
+        ]));
+        $client = new Client(['handler' => $stack]);
+        $response = $client->request('GET', '/');
+
+        $this->assertEquals('Good', (string) $response->getBody());
+    }
+
+    public function testRetryIfMethodNotSpecified(): void
+    {
+        $responses = [
+            new Response(429, [], 'Wait'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory());
+        $client = new Client(['handler' => $stack]);
+        $response = $client->request('PATCH', '/');
+
+        $this->assertEquals('Good', (string) $response->getBody());
+    }
 }

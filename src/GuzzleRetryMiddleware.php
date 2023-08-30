@@ -55,6 +55,8 @@ class GuzzleRetryMiddleware
     // Default retry-after header
     public const RETRY_AFTER_HEADER = 'Retry-After';
 
+    public const REQUEST_METHODS_ALL = '*';
+
     /**
      * @var array<string,mixed>
      */
@@ -99,6 +101,9 @@ class GuzzleRetryMiddleware
 
         // Date format
         'retry_after_date_format'          => self::DATE_FORMAT,
+
+        // Request method
+        'retry_on_methods'                 => self::REQUEST_METHODS_ALL,
 
         // Decider callback
         'should_retry_callback'            => null
@@ -180,7 +185,7 @@ class GuzzleRetryMiddleware
     protected function onFulfilled(RequestInterface $request, array $options): callable
     {
         return function (ResponseInterface $response) use ($request, $options) {
-            return $this->shouldRetryHttpResponse($options, $response)
+            return $this->shouldRetryHttpResponse($options, $response, $request)
                 ? $this->doRetry($request, $options, $response)
                 : $this->returnResponse($options, $response);
         };
@@ -201,13 +206,13 @@ class GuzzleRetryMiddleware
         return function (Throwable $reason) use ($request, $options): PromiseInterface {
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
-                if ($this->shouldRetryHttpResponse($options, $reason->getResponse())) {
+                if ($this->shouldRetryHttpResponse($options, $reason->getResponse(), $request)) {
                     return $this->doRetry($request, $options, $reason->getResponse());
                 }
             // If this was a connection exception, test to see if we should retry based on connect timeout rules
             } elseif ($reason instanceof ConnectException) {
                 // If was another type of exception, test if we should retry based on timeout rules
-                if ($this->shouldRetryConnectException($options)) {
+                if ($this->shouldRetryConnectException($options, $request)) {
                     return $this->doRetry($request, $options);
                 }
             }
@@ -228,12 +233,23 @@ class GuzzleRetryMiddleware
      * @param array<string,mixed> $options
      * @return bool
      */
-    protected function shouldRetryConnectException(array $options): bool
+    protected function shouldRetryConnectException(array $options, RequestInterface $request): bool
     {
         return $options['retry_enabled']
             && ($options['retry_on_timeout'] ?? false)
             && $this->hasTimeAvailable($options) !== false
-            && $this->countRemainingRetries($options) > 0;
+            && $this->countRemainingRetries($options) > 0
+            && $this->ensureMethod($options, $request);
+    }
+
+    protected function ensureMethod(array $options, RequestInterface $request): bool
+    {
+        if ($options['retry_on_methods'] === self::REQUEST_METHODS_ALL) {
+            return true;
+        } else {
+            $reqMethods = array_map('strtoupper', (array) $options['retry_on_methods']);
+            return in_array(strtoupper($request->getMethod()), $reqMethods);
+        }
     }
 
     /**
@@ -247,10 +263,14 @@ class GuzzleRetryMiddleware
      *
      * @param array<string,mixed> $options
      * @param ResponseInterface|null $response
+     * @param RequestInterface|null $request
      * @return bool  TRUE if the response should be retried, FALSE if not
      */
-    protected function shouldRetryHttpResponse(array $options, ?ResponseInterface $response = null): bool
-    {
+    protected function shouldRetryHttpResponse(
+        array $options,
+        ?ResponseInterface $response = null,
+        ?RequestInterface $request = null
+    ): bool {
         $statuses = array_map('\intval', (array) $options['retry_on_status']);
         $hasRetryAfterHeader = $response && $response->hasHeader('Retry-After');
 
@@ -258,6 +278,7 @@ class GuzzleRetryMiddleware
             case $options['retry_enabled'] === false:
             case $this->hasTimeAvailable($options) === false:
             case $this->countRemainingRetries($options) === 0:
+            case (! $this->ensureMethod($options, $request)):
                 return false;
 
             // Has 'should_retry_callback' option?

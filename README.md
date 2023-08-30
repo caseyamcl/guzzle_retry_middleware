@@ -74,7 +74,7 @@ The following options are available:
 | `give_up_after_secs`               | integer           | null               | If set, specifies a hard ceiling in seconds that this middleware will allow retries                                              |
 | `retry_only_if_retry_after_header` | boolean           | false              | Retry only if `RetryAfter` header sent                                                                                           |
 | `retry_on_status`                  | array<int>        | 503, 429           | The response status codes that will trigger a retry                                                                              |
-| `default_retry_multiplier`         | float or callable | 1.5                | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details) |
+| `default_retry_multiplier`         | float or callable | 1.5                | Value to multiply the number of requests by if `RetryAfter` not supplied (see [below](#setting-default-retry-delay) for details) | 
 | `on_retry_callback`                | callable          | null               | Optional callback to call before a retry occurs                                                                                  |
 | `retry_on_timeout`                 | boolean           | false              | Set to TRUE if you wish to retry requests that throw a ConnectException such as a timeout or 'connection refused'                |
 | `expose_retry_header`              | boolean           | false              | Set to TRUE if you wish to expose the number of retries as a header on the response object                                       |
@@ -82,6 +82,7 @@ The following options are available:
 | `retry_after_header`               | string            | Retry-After        | The remote server header key to look for information about how long to wait until retrying the request.                          |
 | `retry_after_date_format`          | string            | `D, d M Y H:i:s T` | Optional customization for servers that return date/times that violate the HTTP spec                                             |
 | `should_retry_callback`            | callable          | null               | Optional callback to decide whether or not retry the request                                                                     |
+| `retry_on_methods`                 | string            | '*' (all methods)  | Optional list of HTTP methods for which to run retries for                                                                       |
 
 Each option is discussed in detail below.
 
@@ -385,8 +386,7 @@ $response = $client->get('/some-path', [
 ]);
 ```
 
-
-### Setting a hard ceiling for all retries
+### Setting a hard time ceiling for all retries
 
 If you want to set a hard time-limit for all retry requests, set the `give_up_after_secs` option. If set, this will be
 checked before the number of retries is, so any requests will fail even if you haven't reached your retry count limit.
@@ -395,8 +395,20 @@ checked before the number of retries is, so any requests will fail even if you h
 // This will fail when either the number of seconds is reached, or the number of retry attempts is reached, whichever
 // comes first 
 $response = $client->get('/some-path', [
-   'max_retry_attempts' => 10 
-   'give_up_after_secs' => 10
+    'max_retry_attempts' => 10 
+    'give_up_after_secs' => 10
+]);
+```
+
+### Setting specific HTTP methods to retry on
+
+By default, this library retries all request methods (`GET`, `POST`, `PATCH`, etc...). If you want to limit the HTTP methods
+that this library will retry requests for, specify the `retry_on_methods` option with an array of methods:
+
+```php
+//
+$response = $client->get('/some-path', [
+    'retry_on_methods' => ['GET', 'OPTIONS', 'HEAD']
 ]);
 ```
 

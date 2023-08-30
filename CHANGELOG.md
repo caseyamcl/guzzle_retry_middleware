@@ -4,6 +4,11 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## UNRELEASED
+### Added
+- New [`retry_on_methods` parameter]().
+### Changed
+
 ## 2.8.0 (2022-11-20)
 ### Added
 - New [`should_retry_callback` parameter](./README.md#custom-retry-decision-logic).
