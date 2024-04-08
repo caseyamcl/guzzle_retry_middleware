@@ -231,6 +231,7 @@ class GuzzleRetryMiddleware
      * Decide whether to retry on connect exception
      *
      * @param array<string,mixed> $options
+     * @param RequestInterface $request
      * @return bool
      */
     protected function shouldRetryConnectException(array $options, RequestInterface $request): bool

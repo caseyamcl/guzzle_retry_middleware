@@ -747,7 +747,27 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $responses = [
             new Response(429, [], 'Wait 1'),
             new Response(429, [], 'Wait 2'),
-            new Response(429, [], 'Wait 3'),
+            new Response(503, [], 'Wait 3'),
+            new Response(429, [], 'Wait 4'),
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'default_retry_multiplier' => 1.5,
+            'give_up_after_secs' => 1
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+    }
+
+    public function testGiveUpAfterSecsWithLongerTimes(): void
+    {
+        $responses = [
+            new Response(429, [], 'Wait 1'),
+            new Response(429, [], 'Wait 2'),
+            new Response(503, [], 'Wait 3'),
             new Response(429, [], 'Wait 4'),
             new Response(200, [], 'Good')
         ];
