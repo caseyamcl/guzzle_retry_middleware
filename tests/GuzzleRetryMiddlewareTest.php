@@ -684,6 +684,35 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
+    public function testConnectTimeoutIncludesExceptionInCallbackHandler(): void
+    {
+        // Send connect timeout (cURL error 28) then a good response
+        $responses = [
+            new ConnectException(
+                'Connection timed out',
+                new Request('GET', '/'),
+                null,
+                ['errno' => 28]
+            ),
+            new Response(200, [], 'Good')
+        ];
+
+        $excTest = null;
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'retry_on_timeout' => true, // Enable connect timeout
+            'on_retry_callback' => function ($nr, $d, $req, $o, $resp, $exception) use (&$excTest) {
+                $excTest = $exception;
+            }
+        ]));
+
+        $client = new Client(['handler' => $stack]);
+        $client->request('GET', '/');
+
+        $this->assertInstanceOf(\Throwable::class, $excTest);
+    }
+
     public function testConnectTimeoutIsNotHandledWhenOptionIsSetToFalse(): void
     {
         // Send connect timeout (cURL error 28) then a good response

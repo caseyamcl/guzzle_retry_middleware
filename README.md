@@ -266,15 +266,25 @@ use Psr\Http\Message\ResponseInterface;
  * @param RequestInterface       $request        Request
  * @param array                  $options        Guzzle request options
  * @param ResponseInterface|null $response       Response (or NULL if response not sent; e.g. connect timeout)
+ * @param Throwable|null         $exception      This value will be present if the retry was triggered by onRejected
+ *                                               (e.g. in the event of a connection timeout)                                                
  */
-$listener = function(int $attemptNumber, float $delay, RequestInterface &$request, array &$options, ?ResponseInterface $response) {
+$listener = function(
+    int $attemptNumber,
+    float $delay,
+    RequestInterface &$request,
+    array &$options,
+    ?ResponseInterface $response,
+    ?Throwable $exception
+) {
     
     echo sprintf(
-        "Retrying request to %s.  Server responded with %s.  Will wait %s seconds.  This is attempt #%s",
+        "Retrying request to %s.  Server responded with %s.  Will wait %s seconds.  This is attempt #%s. The error was %s",
         $request->getUri()->getPath(),
         $response->getStatusCode(),
         number_format($delay, 2),
-        $attemptNumber
+        $attemptNumber,
+        $exception->getMessage()
     );
 }
 

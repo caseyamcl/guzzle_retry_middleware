@@ -207,13 +207,13 @@ class GuzzleRetryMiddleware
             // If was bad response exception, test if we retry based on the response headers
             if ($reason instanceof BadResponseException) {
                 if ($this->shouldRetryHttpResponse($options, $request, $reason->getResponse())) {
-                    return $this->doRetry($request, $options, $reason->getResponse());
+                    return $this->doRetry($request, $options, $reason->getResponse(), $reason);
                 }
             // If this was a connection exception, test to see if we should retry based on connect timeout rules
             } elseif ($reason instanceof ConnectException) {
                 // If was another type of exception, test if we should retry based on timeout rules
                 if ($this->shouldRetryConnectException($options, $request)) {
-                    return $this->doRetry($request, $options);
+                    return $this->doRetry($request, $options, null, $reason);
                 }
             }
 
@@ -338,10 +338,15 @@ class GuzzleRetryMiddleware
      * @param RequestInterface $request
      * @param array<string,mixed> $options
      * @param ResponseInterface|null $response
+     * @param Throwable|null $exception If this was called due to a ConnectException, then that is included
      * @return Promise
      */
-    protected function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null): Promise
-    {
+    protected function doRetry(
+        RequestInterface $request,
+        array $options,
+        ResponseInterface $response = null,
+        ?Throwable $exception = null
+    ): Promise {
         // Increment the retry count
         ++$options['retry_count'];
 
@@ -357,7 +362,8 @@ class GuzzleRetryMiddleware
                     $delayTimeout,
                     &$request,
                     &$options,
-                    $response
+                    $response,
+                    $exception
                 ]
             );
         }
