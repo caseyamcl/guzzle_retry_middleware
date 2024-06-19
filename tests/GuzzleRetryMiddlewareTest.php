@@ -25,6 +25,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Handler\MockHandler;
@@ -58,6 +59,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      * @dataProvider providerForRetryOccursWhenStatusCodeMatches
      * @param Response $response
      * @param bool $retryShouldOccur
+     * @throws GuzzleException
      */
     public function testRetryOccursWhenStatusCodeMatches(Response $response, bool $retryShouldOccur): void
     {
@@ -101,6 +103,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
      *
      * @dataProvider retriesFailAfterSpecifiedLimitProvider
      * @param array<int,Response> $responses
+     * @throws GuzzleException
      */
     public function testRetriesFailAfterSpecifiedLimit(array $responses): void
     {
@@ -529,7 +532,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
             $client->request('GET', '/');
             $this->fail('Should have timed out');
         } catch (ClientException $e) {
-            $this->assertEquals([3.0, 7.0], $delayTimes);
+            $this->assertEquals([3.0, 10.0], $delayTimes);
         }
     }
 
@@ -762,24 +765,39 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $client->request('GET', '/');
     }
 
-    public function testGiveUpAfterSecsWithLongerTimes(): void
+    public function testRespectGiveUpAfterSecs(): void
     {
         $responses = [
-            new Response(429, [], 'Wait 1'),
-            new Response(429, [], 'Wait 2'),
-            new Response(503, [], 'Wait 3'),
-            new Response(429, [], 'Wait 4'),
+            new Response(503, ['Retry-After' => '1'], 'Resp 1'),
+            new Response(503, ['Retry-After' => '1'], 'Resp 2'),
+            new Response(503, ['Retry-After' => '1'], 'Resp 3'),
+            new Response(503, ['Retry-After' => '360'], 'Resp 4'),
+            new Response(503, ['Retry-After' => '10'], 'Resp 5'),
             new Response(200, [], 'Good')
         ];
 
+        $numRetries = 0;
+
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(GuzzleRetryMiddleware::factory([
-            'default_retry_multiplier' => 1.5,
-            'give_up_after_secs' => 1
+            'default_retry_multiplier' => 2,
+            'give_up_after_secs' => 5,
+            'on_retry_callback' => function ($retryCount) use (&$numRetries) {
+                $numRetries = $retryCount;
+            }
         ]));
 
-        $client = new Client(['handler' => $stack]);
-        $client->request('GET', '/');
+        $respBody = null;
+
+        try {
+            $client = new Client(['handler' => $stack]);
+            $client->request('GET', '/');
+        } catch (ServerException $e) {
+            $respBody = $e->getResponse()->getBody()->getContents();
+        }
+
+        $this->assertEquals(3, $numRetries);
+        $this->assertEquals('Resp 4', $respBody);
     }
 
     public function testGiveUpAfterSecsSucceedsWhenTimeLimitNotExceeded(): void
@@ -896,7 +914,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $client->request('GET', '/');
 
         $this->assertEquals('GoodHeader', $testRequest->getHeaderLine('TestHeader'));
-        $this->assertArrayHasKey('TestOption', $testOptions);
+        $this->assertArrayHasKey('TestOption', $testOptions ?? []);
         $this->assertEquals('GoodOption', $testOptions['TestOption']);
     }
 

@@ -280,6 +280,16 @@ class GuzzleRetryMiddleware
         $statuses = array_map('\intval', (array) $options['retry_on_status']);
         $hasRetryAfterHeader = $response && $response->hasHeader('Retry-After');
 
+        // Abort if next request time would be greater than the time
+        if ((int) $options['give_up_after_secs'] > 0) {
+            $delayTimeout = ($this->determineDelayTimeout($options, $response));
+            $nextRequestTime = $options['first_request_timestamp'] + $delayTimeout;
+            $giveUpAfterTime = $options['first_request_timestamp'] + $options['give_up_after_secs'];
+            if ($nextRequestTime > $giveUpAfterTime) {
+                return false;
+            }
+        }
+
         switch (true) {
             case $options['retry_enabled'] === false:
             case $this->hasTimeAvailable($options) === false:
@@ -385,6 +395,8 @@ class GuzzleRetryMiddleware
      */
     protected function determineDelayTimeout(array $options, ?ResponseInterface $response = null): float
     {
+        $timeoutDerivedFromServer = false;
+
         // If 'default_retry_multiplier' option is a callable, call it to determine the default timeout...
         if (is_callable($options['default_retry_multiplier'])) {
             $defaultDelayTimeout = (float) call_user_func(
@@ -402,7 +414,12 @@ class GuzzleRetryMiddleware
             $timeout = $this->deriveTimeoutFromHeader(
                 $response->getHeader($options['retry_after_header'])[0],
                 $options['retry_after_date_format']
-            ) ?? $defaultDelayTimeout;
+            );
+            if ($timeout !== null) {
+                $timeoutDerivedFromServer = true;
+            } else {
+                $timeout = $defaultDelayTimeout;
+            }
         } else {
             $timeout = abs($defaultDelayTimeout);
         }
@@ -415,7 +432,7 @@ class GuzzleRetryMiddleware
         }
 
         // If 'give_up_after_secs' is set, account for it in determining the timeout
-        if ($options['give_up_after_secs']) {
+        if ($options['give_up_after_secs'] && ! $timeoutDerivedFromServer) {
             $giveUpAfterSecs = abs((float) $options['give_up_after_secs']);
             $timeSinceFirstReq =  $options['request_timestamp'] - $options['first_request_timestamp'];
             $timeout = min($timeout, ($giveUpAfterSecs - $timeSinceFirstReq));
@@ -450,8 +467,7 @@ class GuzzleRetryMiddleware
      */
     protected function deriveTimeoutFromHeader(string $headerValue, string $dateFormat = self::DATE_FORMAT): ?float
     {
-        // The timeout will either be a number or a HTTP-formatted date,
-        // or seconds (integer)
+        // The timeout will either be a number of seconds (int) or an HTTP-formatted date
         if (is_numeric($headerValue)) {
             return (float) trim($headerValue);
         } elseif ($date = DateTime::createFromFormat($dateFormat ?: self::DATE_FORMAT, trim($headerValue))) {
