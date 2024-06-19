@@ -7,6 +7,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## [2.10.0] (2024-06-19)
 ### Added
 - Include [`on_retry_callback` argument]() when triggered by `onRejected` (thanks @ViktorCollin)
+- PHP 8.3 tests in GitHub builds
 
 ### Fixed
 - Ensure that no requests are sent after the `give_up_after_secs` expires, and fail quickly (thanks @rubentebogt)
