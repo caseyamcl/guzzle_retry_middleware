@@ -283,8 +283,8 @@ class GuzzleRetryMiddleware
         // Abort if next request time would be greater than the time
         if ((int) $options['give_up_after_secs'] > 0) {
             $delayTimeout = ($this->determineDelayTimeout($options, $response));
-            $nextRequestTime = $options['first_request_timestamp'] + $delayTimeout;
-            $giveUpAfterTime = $options['first_request_timestamp'] + $options['give_up_after_secs'];
+            $nextRequestTime = (float) $options['first_request_timestamp'] + $delayTimeout;
+            $giveUpAfterTime = (float) $options['first_request_timestamp'] + $options['give_up_after_secs'];
             if ($nextRequestTime > $giveUpAfterTime) {
                 return false;
             }
