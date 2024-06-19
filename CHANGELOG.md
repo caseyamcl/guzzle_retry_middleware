@@ -4,24 +4,33 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [2.10.0] (2024-06-19)
+### Added
+- Include [`on_retry_callback` argument]() when triggered by `onRejected` (thanks @ViktorCollin)
+
+### Fixed
+- Ensure that no requests are sent after the `give_up_after_secs` expires, and fail quickly (thanks @rubentebogt)
+- Minor code syntax and comment fixes
+- Cleaned up this CHANGELOG a bit
+
 ## [2.9.0] (2023-08-30)
 ### Added
-- New [`retry_on_methods` parameter](./README.md#setting-specific-http-methods-to-retry-on).
+- New [`retry_on_methods` option](./README.md#setting-specific-http-methods-to-retry-on).
 
-## 2.8.0 (2022-11-20)
+## [2.8.0] (2022-11-20)
 ### Added
-- New [`should_retry_callback` parameter](./README.md#custom-retry-decision-logic).
+- New [`should_retry_callback` option](./README.md#custom-retry-decision-logic).
 - GitHub Action build for PHP 8.2
 ### Changed
 - Added some extra parameters to PHPStan checks to make sure they don't fail on automated builds
 - Minor `README` updates
 
-## 2.7.1 (2022-08-07)
+## [2.7.1] (2022-08-07)
 ### Fixed
 - Composer 2.2+ security issue with installing `phpstan/extension-installer`
 - Ensure `XDEBUG_MODE` environment variable is set when running PHPUnit
 
-## 2.7 (2021-12-03)
+## [2.7.0] (2021-12-03)
 ### Added
 - Support PHP v8.1
 - New [`give_up_after_secs` parameter](./README.md#setting-a-hard-time-ceiling-for-all-retries)
@@ -29,7 +38,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Upgraded to PHPStan 1.2
 - Improved comments for options array
 
-## v2.6.1 (2020-11-27)
+## [2.6.1] (2020-11-27)
 ### Added
 - PHPStan in dev dependencies
 - Additional build checks (PHPStan and PHP-CS)
@@ -45,7 +54,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Removed
 - Build dependency on scrutinizer.org service
 
-## v2.6 (2020-11-24)
+## [2.6] (2020-11-24)
 ### Added
 - GitHub Actions build status badge in `README.md`
 - Support for custom date formats in `Retry-After` header via new `retry_after_date_format` option
@@ -54,18 +63,18 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Changed
 - Removed unnecessary comments
-- Name of Github Action to `Github Build`
+- Name of GitHub Action to `Github Build`
 
 ### Removed
-- `.travis.yml` build support (switched to Github Actions)
+- `.travis.yml` build support (switched to GitHub Actions)
 
-## v2.5 (2020-11-02)
+## [2.5] (2020-11-02)
 ### Added
 - Ability to handle non-integer values in `Retry-After` headers (thanks @andrewdalpino)
 - Beginning GitHub Workflows code (support for Travis-CI will be removed in the next minor version)
 - Support for PHP v8.0 in `composer.json`
 
-## v2.4 (2020-08-19)
+## [2.4] (2020-08-19)
 ### Added
 - Option to specify custom HTTP header name other than `Retry-After` (thanks @jamesaspence)
 
@@ -76,7 +85,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Removed
 - Removed build tests for PHP 7.1 in `.travis.yml`
 
-## v2.3.3 (2020-05-17)
+## [2.3.3] (2020-05-17)
 
 ### Changed
 - Minimum allowed version of PHPUnit is v7.5
@@ -86,13 +95,13 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Fixed
 - Cleaned up comments and updated syntax in tests to be compatible with newer versions of PHPUnit (v8 and v9)
 
-## v2.3.2 (2020-01-27)
+## [2.3.2] (2020-01-27)
 
 ### Added
 - PHP 7.4 build test in `.travis.yml` (thanks @alexeyshockov)
 - Guzzle v7 support in `composer.json` (thanks @alexeyshockov)
 
-## v2.3.1 (2019-10-28)
+## [2.3.1] (2019-10-28)
 
 ### Added
 - `declare(strict_types=1)` in unit test file
@@ -101,7 +110,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Fixes to README.md
 - Code tweaks: Upgrade to PSR-12 compliance
 
-## v2.3 (2019-09-16)
+## [2.3] (2019-09-16)
 
 ### Added
 - PHP 7 goodness: `declare(strict_types=1)` and method return signatures
@@ -120,7 +129,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Always ensure positive integer used when calculating delay timeout (fixes #12)
 - Retry connect exception regardless of cURL error code (thanks @LeoniePhiline) (fixes #14)
 
-## v2.2 (2018-06-03)
+## [2.2] (2018-06-03)
 
 ### Added
 - Added `expose_retry_header` and `retry_header` options for debugging purposes (thanks, @coudenysj)
@@ -139,13 +148,13 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Removed
 - `hhvm` tests in Travis CI; they were causing builds to fail
 
-## v2.1 (2018-02-13)
+## [2.1] (2018-02-13)
 
 ### Added
 - Added `retry_enabled` parameter to allow quick disable of retry on specific requests
 - Added ability to pass in a callable to `default_retry_multiplier` in order to implement custom delay logic
 
-## v2.0 (2017-10-02)
+## [2.0] (2017-10-02)
 
 ### Added
 - Added ability to retry on connect or request timeout (`retry_on_timeout` option)
@@ -160,7 +169,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Fixed
 - Clarified and cleaned up some documentation in README, including a typo.
 
-## v1.0 (2017-07-29)
+## [1.0] (2017-07-29)
 
 ### Added
 - Everything; this is the initial version.
