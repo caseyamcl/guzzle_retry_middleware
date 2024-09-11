@@ -299,7 +299,7 @@ class GuzzleRetryMiddleware
 
             // Has 'should_retry_callback' option?
             case $options['should_retry_callback']:
-                return (bool) call_user_func($options['should_retry_callback'], $options, $response);
+                return (bool) call_user_func($options['should_retry_callback'], $options, $response, $request);
 
             // No Retry-After header, and it is required?  Give up!
             // (note: this has to be after the 'should_retry_callback' case)

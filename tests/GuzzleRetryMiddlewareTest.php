@@ -32,6 +32,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -1028,16 +1029,20 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(GuzzleRetryMiddleware::factory([
             'max_allowable_timeout_secs' => 2,
-            'should_retry_callback' => function (array $options, ?ResponseInterface $response) {
-                return $response && $response->getStatusCode() !== 200;
-            },
+            'should_retry_callback' =>
+                function (array $options, ?ResponseInterface $response, RequestInterface $request) {
+                    return $response
+                        && $response->getStatusCode() !== 200
+                        && $request->hasHeader('x-header')
+                    ;
+                },
             'on_retry_callback' => function () use (&$numTotalRetries) {
                 $numTotalRetries++;
             }
         ]));
 
         $client = new Client(['handler' => $stack]);
-        $client->request('GET', '/');
+        $client->request('GET', '/', [RequestOptions::HEADERS => ['x-header' => '123']]);
         $this->assertSame(3, $numTotalRetries);
     }
 

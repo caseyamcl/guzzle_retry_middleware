@@ -429,6 +429,9 @@ consider a server that returns a `200` status code, but with a message body inst
 you can use the `should_retry_callback` option to implement a callback method that returns `true` (should retry) or `false` 
 (should not retry).
 
+Another use for this callback could be based on the request itself.
+For example, you may only want to retry requests that have a specific header set.
+
 It's important to note that the callback will be called only if all the following circumstances are true:
 
 * The `retry_enabled` option is `true` (default: `true`)
@@ -436,10 +439,16 @@ It's important to note that the callback will be called only if all the followin
 * The total time elapsed is less than the `give_up_after_secs` value (default: _disabled_)
 
 ```php
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 
-$callback = function (array $options, ?ResponseInterface $response = null): bool {
+$callback = function (array $options, ?ResponseInterface $response, RequestInterface $request): bool {
+    // Only allow retries if x-header header is set
+    if(! $request->hasHeader('x-header')) {
+        return false; 
+    }
+
     // Response will be NULL in the event of a connection timeout, so your callback function
     // will need to be able to handle that case
     if (! $response) {
