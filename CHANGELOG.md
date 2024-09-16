@@ -4,6 +4,10 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [Unreleased]
+### Added
+- Include RequestInterface as  [`should_retry_callback` argument](./README.md#custom-retry-decision-logic) when triggered.
+
 ## [2.10.0] (2024-06-19)
 ### Added
 - Include [`on_retry_callback` argument]() when triggered by `onRejected` (thanks @ViktorCollin)
