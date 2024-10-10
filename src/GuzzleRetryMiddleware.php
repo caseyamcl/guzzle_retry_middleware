@@ -23,6 +23,7 @@ use Closure;
 use DateTime;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -215,7 +216,16 @@ class GuzzleRetryMiddleware
                 if ($this->shouldRetryConnectException($options, $request)) {
                     return $this->doRetry($request, $options, null, $reason);
                 }
-            }
+            } elseif ($reason instanceof RequestException) {
+				$context = $reason->getHandlerContext();
+                $errNo = $context['errno'] ?? null;
+
+                // Normally, we would not retry on request exceptions, but because a connection reset by peer
+                // could have occured, we will retry on this specific error
+                if ($errNo == 104 && $this->shouldRetryConnectException($options, $request)) {
+                    return $this->doRetry($request, $options, null, $reason);
+                }
+			}
 
             // If made it here, then we have decided not to retry the request
             // Future-proofing this; remove when bumping minimum Guzzle version to 7.0
