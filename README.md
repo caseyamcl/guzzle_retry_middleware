@@ -242,6 +242,7 @@ $guzzle = new \GuzzleHttp\Client(['retry_on_timeout' => true, 'connect_timeout' 
 $response = $guzzle->get('https://example.org');
 ```
 
+As of version 2.12.0, this works for connection reset responses sent by the server (Curl error 104).
 
 ### On-Retry callback
 
