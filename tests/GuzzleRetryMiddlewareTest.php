@@ -26,6 +26,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Handler\MockHandler;
@@ -742,6 +743,62 @@ class GuzzleRetryMiddlewareTest extends TestCase
         }
 
         $this->assertEquals(28, $errorNo);
+    }
+
+    public function testConnectionResetIsHandledWhenOptionIsSetToTrue(): void
+    {
+        // Send connection reset by peer (cURL error 104) then a good response
+        $responses = [
+
+            new RequestException(
+                'Connection reset by peer',
+                new Request('get', '/'),
+                null,
+                null,
+                ['errno' => 104]
+            ),
+
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_timeout' => true])); // Enable connect timeout
+
+        $client = new Client(['handler' => $stack]);
+        $response = $client->request('GET', '/');
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testConnectResetIsNotHandledWhenOptionIsSetToFalse(): void
+    {
+        // Send connection reset by peer (cURL error 104) then a good response
+        $responses = [
+
+            new RequestException(
+                'Connection reset by peer',
+                new Request('get', '/'),
+                null,
+                null,
+                ['errno' => 104]
+            ),
+
+            new Response(200, [], 'Good')
+        ];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_connect_timeout' => false])); // DISABLE connect timeout
+
+        $client = new Client(['handler' => $stack]);
+        $errorNo = null;
+
+        try {
+            $client->request('GET', '/');
+        } catch (RequestException $e) {
+            $errorNo = $e->getHandlerContext()['errno'];
+        }
+
+        $this->assertEquals(104, $errorNo);
     }
 
     /**
