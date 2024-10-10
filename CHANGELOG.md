@@ -4,7 +4,7 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
-## UNRELEASED
+## [2.12.0]
 ### Added
 - Support for connection reset by peer (thanks @fredericgboutin-yapla)
 
