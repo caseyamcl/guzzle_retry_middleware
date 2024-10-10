@@ -4,6 +4,10 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## UNRELEASED
+### Added
+- Support for connection reset by peer (thanks @fredericgboutin-yapla)
+
 ## [2.11.0] (2024-09-16)
 ### Added
 - Include RequestInterface as  [`should_retry_callback` argument](./README.md#custom-retry-decision-logic) when triggered (thanks @Nicolai-).
