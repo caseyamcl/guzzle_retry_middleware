@@ -354,7 +354,7 @@ class GuzzleRetryMiddleware
     protected function doRetry(
         RequestInterface $request,
         array $options,
-        ResponseInterface $response = null,
+        ?ResponseInterface $response = null,
         ?Throwable $exception = null
     ): Promise {
         // Increment the retry count
