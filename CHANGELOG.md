@@ -4,6 +4,13 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [2.12.1] (2024-12-05)
+### Changed
+- Added GitHub build action for PHP 8.4
+- Updated GitHub build `action/checkout` and `action/cache`
+### Fixed
+- Implicit nullable in `doRetry` method (for PHP 8.4)
+
 ## [2.12.0]
 ### Added
 - Support for connection reset by peer (thanks @fredericgboutin-yapla)
