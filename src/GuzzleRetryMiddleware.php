@@ -153,16 +153,19 @@ class GuzzleRetryMiddleware
         // Combine options with defaults specified by this middleware
         $options = array_replace($this->defaultOptions, $options);
 
-        // Set the request timestamp as far as we know it
-        $options['request_timestamp'] = time();
-
         // Set the retry counter if not already set
         if (! isset($options['retry_count'])) {
             $options['retry_count'] = 0;
         }
 
         if ($options['retry_count'] === 0) {
+            // Set the request timestamp as far as we know it
+            $options['request_timestamp'] = time();
+            
             $options['first_request_timestamp'] = time();
+        } else {
+            $delay = $options['delay'] ? (int) ($options['delay'] / 1000) : 0;
+            $options['request_timestamp'] += $delay;
         }
 
         $next = $this->nextHandler;
