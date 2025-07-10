@@ -363,6 +363,10 @@ class GuzzleRetryMiddleware
         // Determine the delay timeout
         $delayTimeout = $this->determineDelayTimeout($options, $response);
 
+        // Init delay
+        // https://docs.guzzlephp.org/en/stable/request-options.html#delay
+       $options['delay'] = (int) ($delayTimeout * 1e3));
+
         // Callback?
         if ($options['on_retry_callback']) {
             call_user_func_array(
@@ -377,9 +381,6 @@ class GuzzleRetryMiddleware
                 ]
             );
         }
-
-        // Delay!
-        usleep((int) ($delayTimeout * 1e6));
 
         // Return
         return $this($request, $options);
