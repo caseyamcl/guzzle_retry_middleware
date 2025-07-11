@@ -164,7 +164,8 @@ class GuzzleRetryMiddleware
             
             $options['first_request_timestamp'] = time();
         } else {
-            $delay = $options['delay'] ? (int) ($options['delay'] / 1000) : 0;
+            $delay = (isset($options['delay']) && is_int($options['delay'])) ? 
+                (int) ($options['delay'] / 1000) : 0;
             $options['request_timestamp'] += $delay;
         }
 
@@ -368,7 +369,7 @@ class GuzzleRetryMiddleware
 
         // Init delay
         // https://docs.guzzlephp.org/en/stable/request-options.html#delay
-       $options['delay'] = (int) ($delayTimeout * 1e3));
+        $options['delay'] = (int) ($delayTimeout * 1e3);
 
         // Callback?
         if ($options['on_retry_callback']) {
