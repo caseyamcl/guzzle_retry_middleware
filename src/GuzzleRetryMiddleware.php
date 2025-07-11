@@ -153,16 +153,18 @@ class GuzzleRetryMiddleware
         // Combine options with defaults specified by this middleware
         $options = array_replace($this->defaultOptions, $options);
 
-        // Set the request timestamp as far as we know it
-        $options['request_timestamp'] = time();
-
         // Set the retry counter if not already set
         if (! isset($options['retry_count'])) {
             $options['retry_count'] = 0;
         }
 
         if ($options['retry_count'] === 0) {
+            $options['request_timestamp'] = time();
             $options['first_request_timestamp'] = time();
+        } else {
+            $delay = (isset($options['delay']) && is_int($options['delay'])) ? 
+                (int) ($options['delay'] / 1000) : 0;
+            $options['request_timestamp'] = time() + $delay;
         }
 
         $next = $this->nextHandler;
@@ -363,6 +365,10 @@ class GuzzleRetryMiddleware
         // Determine the delay timeout
         $delayTimeout = $this->determineDelayTimeout($options, $response);
 
+        // Init delay
+        // https://docs.guzzlephp.org/en/stable/request-options.html#delay
+        $options['delay'] = (int) ($delayTimeout * 1e3);
+
         // Callback?
         if ($options['on_retry_callback']) {
             call_user_func_array(
@@ -377,9 +383,6 @@ class GuzzleRetryMiddleware
                 ]
             );
         }
-
-        // Delay!
-        usleep((int) ($delayTimeout * 1e6));
 
         // Return
         return $this($request, $options);
