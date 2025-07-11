@@ -159,14 +159,12 @@ class GuzzleRetryMiddleware
         }
 
         if ($options['retry_count'] === 0) {
-            // Set the request timestamp as far as we know it
             $options['request_timestamp'] = time();
-            
             $options['first_request_timestamp'] = time();
         } else {
             $delay = (isset($options['delay']) && is_int($options['delay'])) ? 
                 (int) ($options['delay'] / 1000) : 0;
-            $options['request_timestamp'] += $delay;
+            $options['request_timestamp'] = time() + $delay;
         }
 
         $next = $this->nextHandler;
