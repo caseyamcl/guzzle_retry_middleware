@@ -4,6 +4,11 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [2.13.0] (2025-07-11)
+### Changed
+- Delay is now set in the [options array](https://docs.guzzlephp.org/en/stable/request-options.html#delay)
+  rather than using `usleep`. This prevents blocking when running parallel requests (thanks @teandr).
+
 ## [2.12.1] (2024-12-05)
 ### Changed
 - Added GitHub build action for PHP 8.4
