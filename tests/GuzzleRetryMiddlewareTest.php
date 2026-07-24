@@ -26,7 +26,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Handler\MockHandler;
@@ -144,9 +144,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $http429Response = new Response(429, [], 'Wait');
         $connectException = new ConnectException(
             'Connect Timeout',
-            new Request('GET', '/'),
-            null,
-            ['errno' => 28]
+            new Request('GET', '/')
         );
 
         return [
@@ -479,21 +477,17 @@ class GuzzleRetryMiddlewareTest extends TestCase
     public function testGiveUpAfterWorksOnConnectTimeouts(): void
     {
         $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection timed out');
 
         $responses = [
-
             new ConnectException(
                 'Connection timed out',
-                new Request('get', '/'),
-                null,
-                ['errno' => 28]
+                new Request('get', '/')
             ),
 
             new ConnectException(
                 'Connection timed out',
-                new Request('get', '/'),
-                null,
-                ['errno' => 28]
+                new Request('get', '/')
             ),
 
             new Response(200, [], 'Good')
@@ -625,7 +619,9 @@ class GuzzleRetryMiddlewareTest extends TestCase
     public function testNonBadResponseExceptionIsNotHandled(): void
     {
         $this->expectException(TransferException::class);
-        $responses = [new TransferException('Something terrible happened')];
+        $this->expectExceptionMessage('Something terrible happened');
+
+        $responses = [new TransferException('Something terrible happened', new Request('GET', '/'))];
 
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(GuzzleRetryMiddleware::factory([]));
@@ -666,12 +662,9 @@ class GuzzleRetryMiddlewareTest extends TestCase
     {
         // Send connect timeout (cURL error 28) then a good response
         $responses = [
-
             new ConnectException(
                 'Connection timed out',
-                new Request('get', '/'),
-                null,
-                ['errno' => 28]
+                new Request('get', '/')
             ),
 
             new Response(200, [], 'Good')
@@ -692,9 +685,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
         $responses = [
             new ConnectException(
                 'Connection timed out',
-                new Request('GET', '/'),
-                null,
-                ['errno' => 28]
+                new Request('GET', '/')
             ),
             new Response(200, [], 'Good')
         ];
@@ -717,45 +708,33 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     public function testConnectTimeoutIsNotHandledWhenOptionIsSetToFalse(): void
     {
-        // Send connect timeout (cURL error 28) then a good response
-        $responses = [
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection timed out');
 
+        // Send connect timeout then a good response
+        $responses = [
             new ConnectException(
                 'Connection timed out',
-                new Request('get', '/'),
-                null,
-                ['errno' => 28]
+                new Request('get', '/')
             ),
 
             new Response(200, [], 'Good')
         ];
 
         $stack = HandlerStack::create(new MockHandler($responses));
-        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_connect_timeout' => false])); // DISABLE connect timeout
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_timeout' => false]));
 
         $client = new Client(['handler' => $stack]);
-        $errorNo = null;
-
-        try {
-            $client->request('GET', '/');
-        } catch (ConnectException $e) {
-            $errorNo = $e->getHandlerContext()['errno'];
-        }
-
-        $this->assertEquals(28, $errorNo);
+        $client->request('GET', '/');
     }
 
     public function testConnectionResetIsHandledWhenOptionIsSetToTrue(): void
     {
         // Send connection reset by peer (cURL error 104) then a good response
         $responses = [
-
-            new RequestException(
+            new NetworkException(
                 'Connection reset by peer',
-                new Request('get', '/'),
-                null,
-                null,
-                ['errno' => 104]
+                new Request('get', '/')
             ),
 
             new Response(200, [], 'Good')
@@ -772,33 +751,24 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
     public function testConnectResetIsNotHandledWhenOptionIsSetToFalse(): void
     {
-        // Send connection reset by peer (cURL error 104) then a good response
-        $responses = [
+        $this->expectException(NetworkException::class);
+        $this->expectExceptionMessage('Connection reset by peer');
 
-            new RequestException(
+        // Send connection reset by peer then a good response
+        $responses = [
+            new NetworkException(
                 'Connection reset by peer',
-                new Request('get', '/'),
-                null,
-                null,
-                ['errno' => 104]
+                new Request('get', '/')
             ),
 
             new Response(200, [], 'Good')
         ];
 
         $stack = HandlerStack::create(new MockHandler($responses));
-        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_connect_timeout' => false])); // DISABLE connect timeout
+        $stack->push(GuzzleRetryMiddleware::factory(['retry_on_timeout' => false]));
 
         $client = new Client(['handler' => $stack]);
-        $errorNo = null;
-
-        try {
-            $client->request('GET', '/');
-        } catch (RequestException $e) {
-            $errorNo = $e->getHandlerContext()['errno'];
-        }
-
-        $this->assertEquals(104, $errorNo);
+        $client->request('GET', '/');
     }
 
     /**
@@ -912,6 +882,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     public function testNonTimeoutConnectExceptionIsNotRetried(): void
     {
         $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Non-timeout issue');
 
         // Send a connect timeout (cURL error 28) then a good response
         $responses = [
@@ -1046,7 +1017,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
 
         $client = new Client(['handler' => $stack]);
         $client->request('GET', '/');
-        $this->assertSame((double) 2, $calculatedDelay);
+        $this->assertSame(2.0, $calculatedDelay);
     }
 
     public function testMaxAllowableTimeoutSecs(): void
@@ -1106,6 +1077,7 @@ class GuzzleRetryMiddlewareTest extends TestCase
     public function testNoRetryIfMethodSpecifiedAndDoesNotMatch(): void
     {
         $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('429');
 
         $responses = [
             new Response(429, [], 'Wait'),

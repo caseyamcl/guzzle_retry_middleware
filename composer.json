@@ -1,7 +1,7 @@
 {
     "name": "caseyamcl/guzzle_retry_middleware",
     "type": "library",
-    "description": "Guzzle v6+ retry middleware that handles 429/503 status codes and connection timeouts",
+    "description": "Guzzle v8 retry middleware that handles 429/503 status codes and connection timeouts",
     "keywords": [
         "caseyamcl",
         "guzzle_retry_middleware",
@@ -22,8 +22,8 @@
         }
     ],
     "require": {
-        "php": "^7.1|^8.0",
-        "guzzlehttp/guzzle": "^6.3|^7.0"
+        "php": "^7.4|^8.0",
+        "guzzlehttp/guzzle": "^8.0"
     },
     "require-dev": {
         "jaschilz/php-coverage-badger": "^2.0",
