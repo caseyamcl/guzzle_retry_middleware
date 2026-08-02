@@ -23,7 +23,7 @@ use Closure;
 use DateTime;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -32,14 +32,13 @@ use Throwable;
 
 use function call_user_func;
 use function call_user_func_array;
-use function GuzzleHttp\Promise\rejection_for; /* @phpstan-ignore-line */
 use function in_array;
 use function is_callable;
 
 /**
  * Retry After Middleware
  *
- * Guzzle 6/7 middleware that retries requests when encountering responses
+ * Guzzle 8 middleware that retries requests when encountering responses
  * with certain conditions (429 or 503).  This middleware also respects
  * the `RetryAfter` header
  *
@@ -62,7 +61,6 @@ class GuzzleRetryMiddleware
      * @var array<string,mixed>
      */
     private $defaultOptions = [
-
         // Retry enabled.  Toggle retry on or off per request
         'retry_enabled'                    => true,
 
@@ -162,7 +160,7 @@ class GuzzleRetryMiddleware
             $options['request_timestamp'] = time();
             $options['first_request_timestamp'] = time();
         } else {
-            $delay = (isset($options['delay']) && is_int($options['delay'])) ? 
+            $delay = (isset($options['delay']) && is_int($options['delay'])) ?
                 (int) ($options['delay'] / 1000) : 0;
             $options['request_timestamp'] = time() + $delay;
         }
@@ -218,24 +216,14 @@ class GuzzleRetryMiddleware
                 if ($this->shouldRetryConnectException($options, $request)) {
                     return $this->doRetry($request, $options, null, $reason);
                 }
-            } elseif ($reason instanceof RequestException) {
-                $context = $reason->getHandlerContext();
-                $errNo = $context['errno'] ?? null;
-
-                // Normally, we would not retry on request exceptions, but because a connection reset by peer
-                // could have occurred, we will retry on this specific error
-                if ($errNo == 104 && $this->shouldRetryConnectException($options, $request)) {
+            } elseif ($reason instanceof NetworkException) {
+                if ($this->shouldRetryConnectException($options, $request)) {
                     return $this->doRetry($request, $options, null, $reason);
                 }
             }
 
             // If made it here, then we have decided not to retry the request
-            // Future-proofing this; remove when bumping minimum Guzzle version to 7.0
-            if (class_exists('\GuzzleHttp\Promise\Create')) {
-                return \GuzzleHttp\Promise\Create::rejectionFor($reason);
-            } else {
-                return rejection_for($reason); /* @phpstan-ignore-line */
-            }
+            return \GuzzleHttp\Promise\Create::rejectionFor($reason);
         };
     }
 
@@ -399,7 +387,7 @@ class GuzzleRetryMiddleware
             return $response;
         }
 
-        return $response->withHeader($options['retry_header'], $options['retry_count']);
+        return $response->withHeader($options['retry_header'], (string) $options['retry_count']);
     }
 
     /**

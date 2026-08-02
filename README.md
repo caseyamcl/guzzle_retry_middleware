@@ -7,15 +7,20 @@
 [![PHPStan Level 8][ico-phpstan]][link-phpstan]
 [![Total Downloads][ico-downloads]][link-downloads]
 
-This is a [Guzzle v6/7+](https://docs.guzzlephp.org) middleware library that implements automatic
-retry of requests when HTTP servers respond with `503` or `429` status codes. It can also
-be configured to retry requests that timeout.
- 
-If a server supplies a [Retry-After header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After), 
-this middleware will delay subsequent requests per the server's instructed wait period.
+This is a [Guzzle v8](https://github.com/guzzle/guzzle) middleware library that implements automatic
+retry of requests when HTTP servers respond with `503` or `429` status codes. It can also be configured to retry requests 
+that timeout.
 
-Unlike the built-in `RetryAfter` middleware, this middleware provides some default behavior for negotiating retries
-based on rules in the HTTP Spec.  You can drop it right into your request stack without any additional configuration.
+> [!NOTE]
+> This version is only for Guzzle v8.x and above.
+> For Guzzle v6.x or v7.x support, use v2 of this library (`composer require caseyamcl/guzzle_retry_middleware:^2`)
+
+If a server supplies a [Retry-After header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After), this middleware will delay subsequent requests per the server's 
+instructed wait period.
+
+Unlike the [built-in `RetryAfter` middleware](https://github.com/guzzle/guzzle/blob/8.0/src/RetryMiddleware.php), this
+middleware provides some default behavior for negotiating retries based on rules in the HTTP Spec. 
+You can drop it right into your request stack without any additional configuration.
 
 Features, at-a-glance:
 
@@ -491,6 +496,7 @@ If you discover any security related issues, please email caseyamcl@gmail.com in
 ## Credits
 
 - [Casey McLaughlin][link-author]
+- [scybulski (Guzzle v8 support)](https://github.com/scybulski)
 - [Jachim Coudenys](https://github.com/coudenysj)
 - [Markus Podar](https://github.com/mfn)
 - [All contributors][link-contributors]

@@ -4,6 +4,16 @@ All Notable changes to `guzzle_retry_middleware` will be documented in this file
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [3.0] - 2026-08-02
+### Added
+- Support for Guzzle 8
+- PHP 8.5 in GitHub builds
+### Changed
+- Minimum PHP version is now 7.4 (required by Guzzle 8)
+- Upgraded `php_codesniffer` and `phpstan` packages
+### Removed
+- Dropped support for Guzzle 6, Guzzle 7, and PHP 7.2/7.3 (use v2.x)
+
 ## [2.13.0] (2025-07-11)
 ### Changed
 - Delay is now set in the [options array](https://docs.guzzlephp.org/en/stable/request-options.html#delay)
